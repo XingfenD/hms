@@ -9,15 +9,15 @@ if ($_SESSION["UserType"] !== "admin") {
 include '../db_connection.php'; // 包含数据库连接文件
 
 // 查询医生用户
-$sql_doctor = "SELECT * FROM Users WHERE UserType='doctor'";
+$sql_doctor = "SELECT * FROM users WHERE UserType='doctor'";
 $result_doctor = $conn->query($sql_doctor);
 
 // 查询患者用户
-$sql_patient = "SELECT * FROM Users WHERE UserType='patient'";
+$sql_patient = "SELECT * FROM users WHERE UserType='patient'";
 $result_patient = $conn->query($sql_patient);
 
 // 查询管理员用户
-$sql_admin = "SELECT * FROM Users WHERE UserType='admin'";
+$sql_admin = "SELECT * FROM users WHERE UserType='admin'";
 $result_admin = $conn->query($sql_admin);
 ?>
 

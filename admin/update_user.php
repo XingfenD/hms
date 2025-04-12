@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
     // 使用预处理语句更新用户密码
-    $stmt = $conn->prepare("UPDATE Users SET PasswordHash=? WHERE UserID=? AND Username=? AND UserType=?");
+    $stmt = $conn->prepare("UPDATE users SET PasswordHash=? WHERE UserID=? AND Username=? AND UserType=?");
     $stmt->bind_param("ssss", $hashed_password, $user_id, $user_name, $original_user_type);
 
     if ($stmt->execute() === TRUE) {
