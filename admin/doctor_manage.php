@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 医生管理.php ==> doctor_manage.php -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -91,7 +92,7 @@
 
         <?php
         // 连接数据库
-        include 'db_connection.php'; // 包含数据库连接文件
+        include '../db_connection.php'; // 包含数据库连接文件
 
         // 查询departments表内容
         $sql = "SELECT * FROM departments

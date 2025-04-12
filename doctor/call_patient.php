@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 呼叫患者.php ==> call_patient.php */
+include '../db_connection.php';
 session_start();
 
 // 获取医生ID
@@ -166,7 +167,7 @@ $conn->close();
                         <td><?php echo $row["PatientName"]; ?></td>
                         <td><?php echo $row["DepartmentName"]; ?></td>
                         <td>
-                            <form action="呼叫患者.php" method="POST">
+                            <form action="call_patient.php" method="POST">
                                 <input type="hidden" name="appointment_id" value="<?php echo $row["AppointmentID"]; ?>">
                                 <input type="hidden" name="action" value="call">
                                 <input type="submit" value="呼叫患者">
@@ -204,7 +205,7 @@ $conn->close();
                         <td><?php echo $row["PatientName"]; ?></td>
                         <td><?php echo $row["DepartmentName"]; ?></td>
                         <td>
-                            <form action="呼叫患者.php" method="POST">
+                            <form action="call_patient.php" method="POST">
                                 <input type="hidden" name="appointment_id" value="<?php echo $row["AppointmentID"]; ?>">
                                 <input type="hidden" name="action" value="update">
                                 <select name="new_status">

@@ -1,6 +1,7 @@
 <?php
+/* 挂号.php ==> patient_register.php */
 // 包含数据库连接文件
-include 'db_connection.php';
+include '../db_connection.php';
 
 // 获取科室列表
 $departments = [];

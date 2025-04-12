@@ -1,6 +1,7 @@
 <?php
+/* 药品管理.php ==> drug_manage.php */
 // 数据库连接配置
-include 'db_connection.php'; // 包含数据库连接文件
+include '../db_connection.php'; // 包含数据库连接文件
 session_start();
 
 // 检查用户类型

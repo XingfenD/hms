@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 预约管理.php ==> reservation_manage.php */
+include '../db_connection.php';
 session_start();
 
 // 获取用户ID
@@ -116,7 +117,7 @@ $conn->close();
                         <td><?php echo $row["DepartmentName"]; ?></td>
                         <td>
                             <?php if ($row["AppointmentStatus"] == "已预约") { ?>
-                                <form action="预约管理.php" method="POST" onsubmit="return confirm('您确定要取消此预约吗？');">
+                                <form action="reservation_manage.php" method="POST" onsubmit="return confirm('您确定要取消此预约吗？');">
                                     <input type="hidden" name="appointment_id" value="<?php echo $row["AppointmentID"]; ?>">
                                     <input type="submit" value="取消预约">
                                 </form>

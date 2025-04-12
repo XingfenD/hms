@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db_connection.php';
+include '../db_connection.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 检查用户是否登录且为管理员
     if ($_SESSION["UserType"] !== "admin") {
@@ -69,6 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 
     // 返回用户管理页面
-    echo "<script>window.location.href='用户管理.php';</script>";
+    echo "<script>window.location.href='user_manage.php';</script>";
 }
 ?>

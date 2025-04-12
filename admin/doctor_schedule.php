@@ -1,7 +1,7 @@
 <?php
-
+/* 医生排班.php ==> doctor_schedule.php */
 session_start();
-include 'db_connection.php';
+include '../db_connection.php';
 if ($_SESSION["UserType"] !== "admin") {
     header("Location: index.html");
     exit();
@@ -157,7 +157,7 @@ if ($department_id) {
 <body>
     <h1>医生排班</h1>
     <?php if (!empty($error_message)) echo "<p>$error_message</p>"; ?>
-    <form method="POST" action="医生排班.php">
+    <form method="POST" action="doctor_schedule.php">
         <input type="hidden" name="action" value="add">
         <label for="department_id">选择科室：</label>
         <select name="department_id" required onchange="this.form.submit()">
@@ -212,7 +212,7 @@ if ($department_id) {
         echo "<td>" . $schedule['EndTime'] . "</td>";
         echo "<td>" . $schedule['Shift'] . "</td>";
         echo "<td>
-                <form method='POST' action='医生排班.php' style='display:inline;'>
+                <form method='POST' action='doctor_schedule.php' style='display:inline;'>
                     <input type='hidden' name='action' value='delete'>
                     <input type='hidden' name='schedule_id' value='" . $schedule['ScheduleID'] . "'>
                     <input type='submit' value='删除'>

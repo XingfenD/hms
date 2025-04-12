@@ -1,11 +1,12 @@
 <?php
+/* 用户管理.php ==> user_manage.php */
 session_start();
 if ($_SESSION["UserType"] !== "admin") {
     header("Location: index.html");
     exit();
 }
 
-include 'db_connection.php'; // 包含数据库连接文件
+include '../db_connection.php'; // 包含数据库连接文件
 
 // 查询医生用户
 $sql_doctor = "SELECT * FROM Users WHERE UserType='doctor'";

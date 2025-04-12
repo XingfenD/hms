@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
-$username = "root";
-$password = "wcb5160998";  // 数据库密码
+$username = "yiliao";
+$password = "yiliao123";  // 数据库密码
 $dbname = "yiliao";
 
 // 创建连接

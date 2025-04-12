@@ -1,6 +1,7 @@
 <?php
+/* 患者挂号查询.php ==> patient_registration_query.php */
 // 数据库连接配置
-include 'db_connection.php'; // 包含数据库连接文件
+include '../db_connection.php'; // 包含数据库连接文件
 session_start();
 
 if ($_SESSION["UserType"] !== "admin") {

@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 开具处方.php ==> issue_prescription.php */
+include '../db_connection.php';
 session_start();
 
 // 获取医生ID
@@ -184,7 +185,7 @@ $conn->close();
 <body>
     <h1>开具处方</h1>
     <?php if (!empty($message)) { echo "<p>$message</p>"; } ?>
-    <form action="开具处方.php" method="POST">
+    <form action="issue_prescription.php" method="POST">
         <label for="patient_id">选择患者:</label>
         <select name="patient_id" required>
             <?php if ($patients_result->num_rows > 0) { ?>
@@ -242,7 +243,7 @@ $conn->close();
             var select = input.nextElementSibling;
 
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '搜索药品.php?q=' + query, true);
+            xhr.open('GET', 'search_drug.php?q=' + query, true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var response = JSON.parse(xhr.responseText);

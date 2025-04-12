@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 数据库管理.php ==> db_manage.php -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -54,7 +55,7 @@
 </html>
 
 <?php
-include 'db_connection.php';
+include '../db_connection.php';
 
 // 备份数据库
 if (isset($_POST['backup'])) {

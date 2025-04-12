@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 支付.php ==> payment.php */
+include '../db_connection.php';
 session_start();
 
 // 检查用户是否已登录
@@ -14,7 +15,7 @@ $message = "";
 // 处理支付请求
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prescription_ids"])) {
     $prescription_ids = $_POST["prescription_ids"];
-    
+
     if (count($prescription_ids) > 0) {
         // 启动事务
         $conn->begin_transaction();
@@ -54,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prescription_ids"])) {
                     throw new Exception("无效的处方或该处方已支付。");
                 }
             }
-            
+
             // 提交事务
             $conn->commit();
             $message = "支付成功！总支付金额：￥" . $total_amount;
@@ -70,8 +71,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prescription_ids"])) {
 
 // 获取患者的未支付处方列表，包含药品名称
 $prescriptions_sql = "SELECT prescriptions.PrescriptionID, prescriptions.Quantity, drugs.DrugName, prescriptions.PrescriptionDate, SumPrice 
-                      FROM prescriptions 
-                      INNER JOIN drugs ON prescriptions.DrugID = drugs.DrugID 
+                      FROM prescriptions
+                      INNER JOIN drugs ON prescriptions.DrugID = drugs.DrugID
                       WHERE prescriptions.PatientID = ? AND prescriptions.PaymentStatus = '未支付'
                       ORDER BY prescriptions.PrescriptionDate DESC";
 $stmt = $conn->prepare($prescriptions_sql);
@@ -184,7 +185,7 @@ $conn->close();
     <div class="container">
         <h1>在线支付</h1>
         <?php if (!empty($message)) { echo "<p class='message'>$message</p>"; } ?>
-        <form action="支付.php" method="POST">
+        <form action="payment.php" method="POST">
             <table>
                 <thead>
                     <tr>
@@ -213,16 +214,16 @@ $conn->close();
                     <?php } ?>
                 </tbody>
             </table>
-            
+
             <div class="qr-code">
                 <p>请使用手机扫描下方二维码进行支付:</p>
-                <img src="支付.jpg" alt="收款二维码" width="300" height="400">
+                <img src="payment.jpg" alt="收款二维码" width="300" height="400">
             </div>
-            
+
             <div class="total-amount">
                 <p id="totalAmount">总支付金额：￥0.00</p>
             </div>
-            
+
             <input type="submit" value="确认支付">
         </form>
         <a class="button" href="patient.html">返回到主页</a>

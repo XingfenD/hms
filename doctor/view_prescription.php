@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 查看处方.php ==> view_prescription.php */
+include '../db_connection.php';
 session_start();
 
 // Check if doctor is logged in

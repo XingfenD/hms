@@ -1,5 +1,6 @@
 <?php
-include 'db_connection.php';
+/* 查看清单.php ==> view_list.php */
+include '../db_connection.php';
 session_start();
 
 // 检查用户是否已登录
