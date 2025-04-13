@@ -254,6 +254,6 @@ $conn->close();
     echo "没有药品库存记录.";
 } ?>
 	<a class="button" href="admin.html">返回到管理员仪表盘</a>
-    <a class="button" href="logout.php">注销登录</a>
+    <a class="button" href="../logout.php">注销登录</a>
 </body>
 </html>

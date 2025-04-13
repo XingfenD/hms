@@ -254,7 +254,7 @@ $result_admin = $conn->query($sql_admin);
             <input type="submit" value="修改用户密码">
         </form>
     <a class="button" href="admin.html">返回到管理员仪表盘</a>
-    <a class="button" href="logout.php">注销登录</a>
+    <a class="button" href="../logout.php">注销登录</a>
 </div>
 </body>
 </html>

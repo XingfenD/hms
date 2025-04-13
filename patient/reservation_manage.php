@@ -133,6 +133,6 @@ $conn->close();
         <p>您没有任何预约记录。</p>
     <?php } ?>
 	<a class="button" href="patient.html">返回到主页</a>
-    <a class="button" href="logout.php">退出登录</a>
+    <a class="button" href="../logout.php">退出登录</a>
 </body>
 </html>

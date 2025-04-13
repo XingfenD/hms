@@ -260,6 +260,6 @@ $conn->close();
         }
     </script>
     <a class="button" href="doctor.html">返回到主页</a>
-    <a class="button" href="logout.php">退出登录</a>
+    <a class="button" href="../logout.php">退出登录</a>
 </body>
 </html>
