@@ -8,6 +8,9 @@
 
 /* set the response header to JSON */
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/utils/ApiResponse.php';
 require_once __DIR__ . '/utils/Database.php';
@@ -20,13 +23,14 @@ use App\Database\Database;
  * get the user data
  *
  * @param \PDO $db instance of database connection
- * @param int $userId user id
+ * @param string $user_cell user cellphone
  * @return array|null user data array, return null if empty
  */
-function fetchLoginInfo($db, $userId) {
+function fetchLoginInfoByCellphone($db, $user_cell, $user_type) {
     try {
-        $stmt = $db->prepare("SELECT PasswordHash, UserType FROM users WHERE UserId = :id");
-        $stmt->bindParam(':id', $userId, \PDO::PARAM_INT);
+        $stmt = $db->prepare("SELECT UserId, PasswordHash, UserType FROM users WHERE UserCell = :cell AND UserType = :user_type");
+        $stmt->bindParam(':cell', $user_cell, \PDO::PARAM_STR);
+        $stmt->bindParam(':user_type', $user_type, \PDO::PARAM_STR);
         $stmt->execute();
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -36,6 +40,19 @@ function fetchLoginInfo($db, $userId) {
     }
 }
 
+function fetchLoginInfoByUsername($db, $user_name, $user_type) {
+    try {
+        $stmt = $db->prepare("SELECT UserId, PasswordHash, UserType FROM users WHERE Username = :name AND UserType = :user_type");
+        $stmt->bindParam(':name', $user_name, \PDO::PARAM_STR);
+        $stmt->bindParam(':user_type', $user_type, \PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
+        return null;
+    }
+}
 
 /* the function to handle the request */
 function handleRequest() {
@@ -48,37 +65,47 @@ function handleRequest() {
         /* use initializeDatabase() function in utils/utils.php */
         /* initialize the database connection */
         $db = initializeDatabase();
-        $userId = $_POST['user_id'];
-        $password = $_POST['password'];
+        $in_user_cell = $_POST['cellphone'];    /* cellphone or user_name */
+        $in_password = $_POST['password'];
+        $in_user_type = $_POST['user_type'];
 
         /* verify the arguments */
-        if (empty($userId) || empty($password)) {
-            throw new \Exception("user_id or password can't be null", 400);
+        if (empty($in_user_cell) || empty($in_password) || empty($in_user_type)) {
+            throw new \Exception("empty field", 400);
         }
 
         /* query the login info */
-        $userInfo = fetchLoginInfo($db, $userId);
+        $db_userInfo = fetchLoginInfoByCellphone($db, $in_user_cell, $in_user_type);
+        $db_userInfo2 = fetchLoginInfoByUserName($db, $in_user_cell, $in_user_type);
+        // if (!$db_userInfo && !$db_userInfo2) {
+        //     throw new \Exception("user doesn't exist", 404);
+        // } else if (count($db_userInfo) + count($db_userInfo2) > 1) {
+        //     throw new \Exception("duplicate cellphone or name", 500);
+        // }
 
-        if (!$userInfo) {
+        $db_final_user_info = (!$db_userInfo)? $db_userInfo2: $db_userInfo;
+
+        if (!$db_final_user_info) {
             throw new \Exception("user doesn't exist", 404);
-        } else if (count($userInfo) != 1) {
-            throw new \Exception("duplicate user_id", 500);
+        } else if (count($db_final_user_info) > 1) {
+            throw new \Exception("duplicate cellphone or name", 500);
         }
 
-        $db_psd_hash = $userInfo[0]["PasswordHash"];
-        $db_user_type = $userInfo[0]["UserType"];
+        $db_psd_hash = $db_final_user_info[0]["PasswordHash"];
+        $db_user_type = $db_final_user_info[0]["UserType"];
+        $db_user_id = $db_final_user_info[0]["UserId"];
 
-        if (!password_verify($password, $db_psd_hash)) {
-            throw new \Exception("use_id or password error", 401);
+        if (!password_verify($in_password, $db_psd_hash)) {
+            throw new \Exception("cellphone or password error", 401);
         }
 
         /* TODO: the logic below is possible to be changed */
         switch ($db_user_type) {
             case 'doctor':
-                $_SESSION["doctor_login"] = $user_id;
+                $_SESSION["doctor_login"] = $db_user_id;
                 break;
             case 'patient':
-                $_SESSION["patient_login"] = $user_id;
+                $_SESSION["patient_login"] = $db_user_id;
                 break;
             case 'admin':
                 $_SESSION["UserType"] = "admin";
