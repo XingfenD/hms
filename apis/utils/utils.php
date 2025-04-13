@@ -36,6 +36,6 @@ function initializeDatabase() {
 function verifyMethods($supportedMethods) {
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     if (!in_array($requestMethod, $supportedMethods)) {
-        throw new \Exception("method not supported", 405);
+        throw new \Exception("method not supported for current api", 405);
     }
 }

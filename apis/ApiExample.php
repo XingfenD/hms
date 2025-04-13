@@ -43,13 +43,18 @@ function handleRequest() {
     try {
         /* use verifyMethods function in utils/utils.php */
         session_start();
+
         /* TODO: verify the user's authority or UserType */
         if ($_SESSION["UserType"] !== "admin") {
             throw new \Exception("operation not permitted for current user", 403);
         }
+
         /* TODO: custom your own permitted request methods */
         verifyMethods(['GET']);
 
+        /* use initializeDatabase() function in utils/utils.php */
+        /* initialize the database connection */
+        $db = initializeDatabase();
 
         /* get the request arguments */
         $userId = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
@@ -58,10 +63,6 @@ function handleRequest() {
         if (empty($userId)) {
             throw new \Exception("user_id can't be null", 400);
         }
-
-        /* use initializeDatabase() function in utils/utils.php */
-        /* initialize the database connection */
-        $db = initializeDatabase();
 
         /* query the user_data */
         $userData = fetchUserData($db, $userId);
