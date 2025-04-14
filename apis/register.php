@@ -1,7 +1,7 @@
 <?php
 /**
- * @file apis/login.php
- * @brief the login api
+ * @file apis/register.php
+ * @brief the register api
  * @author xingfen
  * @date 2025-04-13
  */
@@ -43,13 +43,20 @@ function checkDuplicateCell($db, $userCell) {
     }
 }
 
-function registerPatient($db, $userId, $userName, $userCell, $userPassword) {
+function registerPatient($db, $userId, $userName, $userCell, $userPassword, $userGender, $userAge) {
     try {
         $stmt = $db->prepare("INSERT INTO users (UserId, UserName, UserCell, PasswordHash, UserType) VALUES (:userId, :userName, :userCell, :userPassword, 'patient')");
         $stmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
         $stmt->bindParam(':userName', $userName, \PDO::PARAM_STR);
         $stmt->bindParam(':userCell', $userCell, \PDO::PARAM_STR);
         $stmt->bindParam(':userPassword', $userPassword, \PDO::PARAM_STR);
+        $stmt->execute();
+
+        $stmt = $db->prepare("INSERT INTO patients (PatientId, FullName, Gender, Age) VALUES (:userId, :userName, :userGender, :userAge)");
+        $stmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
+        $stmt->bindParam(':userName', $userName, \PDO::PARAM_STR);
+        $stmt->bindParam(':userGender', $userGender, \PDO::PARAM_STR);
+        $stmt->bindParam(':userAge', $userAge, \PDO::PARAM_INT);
         $stmt->execute();
     } catch (\PDOException $e) {
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
@@ -70,6 +77,8 @@ function handleRequest() {
         $in_user_cell= $_POST['cellphone'];
         $in_user_name = $_POST['name'];
         $in_password = $_POST['password'];
+        $in_gender = $_POST['gender'];
+        $in_age = $_POST['age'];
 
         /* verify the arguments */
         if (empty($in_user_cell) || empty($in_user_name) || empty($in_password)) {
@@ -93,7 +102,7 @@ function handleRequest() {
         }
 
         /* insert the new user */
-        registerPatient($db, $newPatientId, $in_user_name, $in_user_cell, $in_psd_hash);
+        registerPatient($db, $newPatientId, $in_user_name, $in_user_cell, $in_psd_hash, $in_gender, $in_age);
 
         /* return success response */
         echo ApiResponse::success("register success")->toJson();

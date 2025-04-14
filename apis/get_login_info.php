@@ -1,7 +1,7 @@
 <?php
 /**
- * @file apis/logout.php
- * @brief the logout api
+ * @file apis/get_login_info.php
+ * @brief get current login user's user_id and user_type
  * @author xingfen
  * @date 2025-04-13
  */
@@ -9,7 +9,7 @@
 /* set the response header to JSON */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/utils/ApiResponse.php';
@@ -25,13 +25,18 @@ function handleRequest() {
         /* use verifyMethods function in utils/utils.php */
         session_start();
 
-        verifyMethods(['POST']);
+        verifyMethods(['GET']);
 
-        session_unset();
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type'])) {
+            throw new \Exception("user not login", 401);
+        }
 
-        session_destroy();
+        $ss_data = Array(
+            'user_id' => $_SESSION['user_id'],
+            'user_type' => $_SESSION['user_type']
+        );
         /* return success response */
-        echo ApiResponse::success("logout success")->toJson();
+        echo ApiResponse::success($ss_data)->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

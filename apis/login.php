@@ -100,21 +100,11 @@ function handleRequest() {
         }
 
         /* TODO: the logic below is possible to be changed */
-        switch ($db_user_type) {
-            case 'doctor':
-                $_SESSION["doctor_login"] = $db_user_id;
-                break;
-            case 'patient':
-                $_SESSION["patient_login"] = $db_user_id;
-                break;
-            case 'admin':
-                $_SESSION["UserType"] = "admin";
-                break;
-            default:
-                throw new \Exception("unknown user_type", 500);
-        }
+        $_SESSION["user_id"] = $db_user_id;
+        $_SESSION["user_type"] = $db_user_type;
+
         /* return success response */
-        echo ApiResponse::success(null)->toJson();
+        echo ApiResponse::success("login success")->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
