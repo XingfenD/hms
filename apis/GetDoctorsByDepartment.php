@@ -1,8 +1,9 @@
 <?php
 /**
  * @file apis/GetDoctorsByDepartment.php
- * @brief 获取指定科室下的医生信息
- * @date 2025-04-13
+ * @brief API - 获取指定科室的医生列表
+ * @author weichuanbo
+ * @date 2025-04-14
  */
 
 header('Content-Type: application/json');
@@ -15,29 +16,31 @@ require_once __DIR__ . '/utils/Database.php';
 require_once __DIR__ . '/utils/utils.php';
 
 use App\Response\ApiResponse;
+use App\Database\Database;
 
 /**
- * 根据科室 ID 获取该科室下的医生信息
- *
+ * 根据科室 ID 查询医生
+ * 
  * @param \PDO $db
  * @param int $departmentId
  * @return array|null
  */
 function fetchDoctorsByDepartment($db, $departmentId) {
     try {
-        $stmt = $db->prepare("
-            SELECT d.DoctorID, d.FullName, dept.Department
-            FROM doctors d
-            INNER JOIN departments dept ON d.DepartmentID = dept.DepartmentID
-            WHERE d.DepartmentID = :deptId
-            ORDER BY d.DoctorID ASC
-        ");
-        $stmt->bindParam(':deptId', $departmentId, PDO::PARAM_INT);
+        $sql = "SELECT doctors.DoctorID, doctors.FullName, departments.Department
+                FROM doctors
+                INNER JOIN departments ON doctors.DepartmentID = departments.DepartmentID
+                WHERE departments.DepartmentID = :department_id
+                ORDER BY doctors.DoctorID ASC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':department_id', $departmentId, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $doctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $doctors;
     } catch (\PDOException $e) {
-        throw new \Exception("数据库查询失败: " . $e->getMessage(), 500);
+        throw new \Exception("Database query failed: " . $e->getMessage(), 500);
     }
 }
 
@@ -45,32 +48,28 @@ function handleRequest() {
     try {
         session_start();
 
-	    //测试的时候手动设置为管理员权限
-	    $_SESSION["UserType"] = "admin";
-
-        // 权限校验（可根据需要放开）
+        // 权限验证：仅限管理员
         if ($_SESSION["UserType"] !== "admin") {
-            throw new \Exception("当前用户无权限执行该操作", 403);
+            throw new \Exception("operation not permitted for current user", 403);
         }
 
         verifyMethods(['GET']);
+
         $db = initializeDatabase();
 
-        // 获取参数
         $departmentId = isset($_GET['department_id']) ? intval($_GET['department_id']) : null;
 
         if (empty($departmentId)) {
             throw new \Exception("department_id 参数不能为空", 400);
         }
 
-        // 获取医生数据
-        $doctors = fetchDoctorsByDepartment($db, $departmentId);
+        $doctorList = fetchDoctorsByDepartment($db, $departmentId);
 
-        if (!$doctors) {
-            throw new \Exception("该科室下暂无医生", 404);
+        if (empty($doctorList)) {
+            throw new \Exception("未找到该科室的医生", 404);
         }
 
-        echo ApiResponse::success($doctors)->toJson();
+        echo ApiResponse::success($doctorList)->toJson();
     } catch (\Exception $e) {
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
     }
