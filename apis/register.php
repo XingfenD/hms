@@ -19,17 +19,6 @@ require_once __DIR__ . '/utils/utils.php';
 use App\Response\ApiResponse;
 use App\Database\Database;
 
-function checkDuplicateCell($db, $userCell) {
-    try {
-        $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM users WHERE UserCell = :userCell");
-        $stmt->bindParam(':userCell', $userCell, \PDO::PARAM_STR);
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
-    } catch (\PDOException $e) {
-        throw new \Exception("Database query failed: ". $e->getMessage(), 500);
-    }
-}
-
 function registerPatient($db, $userId, $userName, $userCell, $userPassword, $userGender, $userAge) {
     try {
         $stmt = $db->prepare("INSERT INTO users (UserId, UserName, UserCell, PasswordHash, UserType) VALUES (:userId, :userName, :userCell, :userPassword, 'patient')");
@@ -79,8 +68,8 @@ function handleRequest() {
         $in_psd_hash = password_hash($in_password, PASSWORD_DEFAULT);
 
         /* check if the user already exists */
-        $duplicateCell = checkDuplicateCell($db, $in_user_cell);
-        if ($duplicateCell['Count'] > 0) {
+        // $duplicateCell = checkDuplicateCell($db, $in_user_cell);
+        if (checkDuplicateCell($db, $in_user_cell)) {
             throw new \Exception("duplicate cellphone", 400);
         }
 

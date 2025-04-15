@@ -68,3 +68,14 @@ function getNewUserId($db, $user_type) {
         return null;
     }
 }
+
+function checkDuplicateCell($db, $userCell) {
+    try {
+        $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM users WHERE UserCell = :userCell");
+        $stmt->bindParam(':userCell', $userCell, \PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC)['Count'] > 0;
+    } catch (\PDOException $e) {
+        throw new \Exception("Database query failed: ". $e->getMessage(), 500);
+    }
+}
