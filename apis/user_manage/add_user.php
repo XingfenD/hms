@@ -1,7 +1,7 @@
 <?php
 /**
  * @file apis/user_manage/add_user.php
- * @brief get the users' data of the tree user_type
+ * @brief add a user(admin/doctor/patient)
  * @author xingfen
  * @date 2025-04-13
  */
@@ -106,7 +106,7 @@ function handleRequest() {
         verifyMethods(['POST']);
 
         if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != "admin") {
-            throw new \Exception("user not logged in or operation not permitted current user", 401);
+            throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 
         if (empty($_POST['user_type']) ||
