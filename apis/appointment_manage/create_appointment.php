@@ -2,8 +2,8 @@
 /**
  * @file apis/create_appointment.php
  * @brief the api to create an appointment record
- * @author Your Name
- * @date 2025-04-14
+ * @author xvjie
+ * @date 2025-04-15
  */
 
 /* set the response header to JSON */

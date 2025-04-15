@@ -12,9 +12,9 @@ header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . '/utils/ApiResponse.php';
-require_once __DIR__ . '/utils/Database.php';
-require_once __DIR__ . '/utils/utils.php';
+require_once __DIR__ . '/../utils/ApiResponse.php';
+require_once __DIR__ . '/../utils/Database.php';
+require_once __DIR__ . '/../utils/utils.php';
 
 use App\Response\ApiResponse;
 use App\Database\Database;
@@ -25,7 +25,7 @@ function handleRequest() {
         verifyMethods(['POST']);
 
         if ($_SESSION["UserType"] !== "admin") {
-            throw new \Exception("operation not permitted for current user", 403);
+            //throw new \Exception("operation not permitted for current user", 403);
         }
 
         $db = initializeDatabase();

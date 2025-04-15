@@ -12,9 +12,9 @@ header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . '/utils/ApiResponse.php';
-require_once __DIR__ . '/utils/Database.php';
-require_once __DIR__ . '/utils/utils.php';
+require_once __DIR__ . '/../utils/ApiResponse.php';
+require_once __DIR__ . '/../utils/Database.php';
+require_once __DIR__ . '/../utils/utils.php';
 
 use App\Response\ApiResponse;
 use App\Database\Database;
