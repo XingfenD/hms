@@ -19,19 +19,6 @@ require_once __DIR__ . '/utils/utils.php';
 use App\Response\ApiResponse;
 use App\Database\Database;
 
-function fetchLatestPatientId($db) {
-    try {
-        // 查询 user 表中最大的 UserId
-        $stmt = $db->prepare("SELECT MAX(UserId) AS MaxUserId FROM users");
-        $stmt->execute();
-
-        // 返回结果
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
-    } catch (\PDOException $e) {
-        throw new \Exception("Database query failed: " . $e->getMessage(), 500);
-    }
-}
-
 function checkDuplicateCell($db, $userCell) {
     try {
         $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM users WHERE UserCell = :userCell");
@@ -86,11 +73,7 @@ function handleRequest() {
         }
 
         /* query the max user id  */
-        $latestPatientId = fetchLatestPatientId($db);
-        $newPatientId = 1;
-        if (count($latestPatientId) > 0 && $latestPatientId['MaxUserId'] !== null) {
-            $newPatientId = $latestPatientId['MaxUserId'] + 1;
-        }
+        $latestPatientId = getNewUserId($db, 'patient');
         /* NOTE: may need error handling */
 
         $in_psd_hash = password_hash($in_password, PASSWORD_DEFAULT);

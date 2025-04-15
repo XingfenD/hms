@@ -49,7 +49,7 @@ function handleRequest() {
 
         /* TODO: verify the user's authority or UserType */
         if ($_SESSION["UserType"] !== "admin") {
-            throw new \Exception("operation not permitted for current user", 403);
+            throw new \Exception("operation not permitted for current user", 401);
         }
 
         /* TODO: custom your own permitted request methods */

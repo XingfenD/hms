@@ -1,6 +1,6 @@
 <?php
 /**
- * @file apis/get_user_data.php
+ * @file apis/user_manage/get_user_data.php
  * @brief get the users' data of the tree user_type
  * @author xingfen
  * @date 2025-04-13
@@ -12,9 +12,9 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . '/utils/ApiResponse.php';
-require_once __DIR__ . '/utils/Database.php';
-require_once __DIR__ . '/utils/utils.php';
+require_once __DIR__ . '/../utils/ApiResponse.php';
+require_once __DIR__ . '/../utils/Database.php';
+require_once __DIR__ . '/../utils/utils.php';
 
 use App\Response\ApiResponse;
 use App\Database\Database;
