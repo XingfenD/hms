@@ -1,7 +1,7 @@
 <?php
 /**
  * @file apis/user_manage/get_user_data.php
- * @brief get the users' data of the tree user_type
+ * @brief get the users' data of the three user_type
  * @author xingfen
  * @date 2025-04-13
  */
@@ -9,6 +9,7 @@
 /* set the response header to JSON */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
