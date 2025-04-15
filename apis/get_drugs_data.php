@@ -12,59 +12,31 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . '/../utils/ApiResponse.php';
-require_once __DIR__ . '/../utils/Database.php';
-require_once __DIR__ . '/../utils/utils.php';
+require_once __DIR__ . '/utils/ApiResponse.php';
+require_once __DIR__ . '/utils/Database.php';
+require_once __DIR__ . '/utils/utils.php';
 
 use App\Response\ApiResponse;
 use App\Database\Database;
 
-function fetchPatientData($db) {
+function fetchDrugData($db) {
     try {
         $stmt = $db->prepare(
             "SELECT
-                p.PatientID,
-                p.FullName,
-                p.Gender,
-                p.Age,
-                u.UserCell
+                DrugID as drug_id,
+                DrugName as drug_name,
+                Price as drug_price,
+                StockQuantity as storage
             FROM
-                patients p
-            JOIN
-                users u
-            ON
-                p.PatientID = u.UserID;"
+                drugs
+            ORDER BY
+                DrugID ASC;"
         );
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     } catch (\PDOException $e) {
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
-    }
-}
-
-function fetchDoctorData($db) {
-    try {
-        $stmt = $db->prepare(
-            "SELECT
-                d.DoctorID,
-                d.FullName,
-                dep.Department,
-                u.UserCell
-            FROM
-                doctors d
-            JOIN
-                users u
-            ON
-                d.DoctorID = u.UserID
-            JOIN
-                departments dep
-            ON
-                d.DepartmentID = dep.DepartmentID;"
-        );
-        $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    } catch (\PDOException $e) {
-        throw new \Exception("Database query failed: ". $e->getMessage(), 500);
+        return null;
     }
 }
 
@@ -78,10 +50,7 @@ function handleRequest() {
 
         $db = initializeDatabase();
 
-        $ret = Array(
-            "patients" => fetchPatientData($db),
-            "doctors" => fetchDoctorData($db)
-        );
+        $ret = fetchDrugData($db);
         /* return success response */
         echo ApiResponse::success($ret)->toJson();
     } catch (\Exception $e) {

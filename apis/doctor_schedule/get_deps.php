@@ -40,10 +40,6 @@ function handleRequest() {
 
         verifyMethods(['GET']);
 
-        if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != "admin") {
-            throw new \Exception("user not logged in or operation not permitted for current user", 401);
-        }
-
         $db = initializeDatabase();
 
         $ret = get_deps($db);
