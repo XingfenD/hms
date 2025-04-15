@@ -42,16 +42,18 @@ function verifyMethods($supportedMethods) {
 
 function getNewUserId($db, $user_type) {
     try {
-        $db->prepare(
+        $stmt = $db->prepare(
             "SELECT
                 MAX(UserID)
             FROM
                 users
             WHERE
-                UserType = ?;"
-        )->execute([$user_type]);
+                UserType = :user_type;"
+        );
+        $stmt->bindParam(':user_type', $user_type, \PDO::PARAM_STR);
+        $stmt->execute();
 
-        $maxId = $db->fetchColumn();
+        $maxId = $stmt->fetchColumn() + 1;
         if ($maxId === null) {
             if ($user_type === "doctor") {
                 return 90001;
@@ -59,6 +61,8 @@ function getNewUserId($db, $user_type) {
                 return 10001;
             }
         }
+
+        return $maxId;
     } catch (\PDOException $e) {
         throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
         return null;

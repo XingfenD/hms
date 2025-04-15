@@ -61,7 +61,7 @@ function handleRequest() {
         /* use initializeDatabase() function in utils/utils.php */
         /* initialize the database connection */
         $db = initializeDatabase();
-        $in_user_cell= $_POST['cellphone'];
+        $in_user_cell = $_POST['cellphone'];
         $in_user_name = $_POST['name'];
         $in_password = $_POST['password'];
         $in_gender = $_POST['gender'];
@@ -73,7 +73,7 @@ function handleRequest() {
         }
 
         /* query the max user id  */
-        $latestPatientId = getNewUserId($db, 'patient');
+        $newPatientId = getNewUserId($db, 'patient');
         /* NOTE: may need error handling */
 
         $in_psd_hash = password_hash($in_password, PASSWORD_DEFAULT);
@@ -88,7 +88,7 @@ function handleRequest() {
         registerPatient($db, $newPatientId, $in_user_name, $in_user_cell, $in_psd_hash, $in_gender, $in_age);
 
         /* return success response */
-        echo ApiResponse::success("register success")->toJson();
+        echo ApiResponse::success($newPatientId)->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

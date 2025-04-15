@@ -20,14 +20,15 @@ use App\Response\ApiResponse;
 use App\Database\Database;
 
 function add_admin($db, $user_name, $user_cell, $user_password) {
-    $new_id = getNewId($db, 'admin');
+    $new_id = getNewUserId($db, 'admin');
     try {
         $stmt = $db->prepare(
             "INSERT INTO
-                users (UserId, UserType, UserName, UserCell, UserPassword)
+                users (UserId, UserType, Username, UserCell, PasswordHash)
             VALUES
-                (new_id, 'admin', :user_name, :user_cell, :user_pass);"
+                (:new_id, 'admin', :user_name, :user_cell, :user_pass);"
         );
+        $stmt->bindParam(':new_id', $new_id, \PDO::PARAM_INT);
         $stmt->bindParam(':user_name', $user_name, \PDO::PARAM_STR);
         $stmt->bindParam(':user_cell', $user_cell, \PDO::PARAM_STR);
         $stmt->bindParam(':user_pass', $user_password, \PDO::PARAM_STR);
@@ -39,8 +40,13 @@ function add_admin($db, $user_name, $user_cell, $user_password) {
 
 function add_doctor($db, $user_name, $user_cell, $user_password, $doc_dep) {
     try {
-        $new_id = getNewId($db, 'doctor');
-        $stmt = $db->prepare("INSERT INTO users (UserId, UserName, UserCell, PasswordHash, UserType) VALUES (:userId, :userName, :userCell, :userPassword, 'patient')");
+        $new_id = getNewUserId($db, 'doctor');
+        $stmt = $db->prepare(
+            "INSERT INTO
+                users (UserId, Username, UserCell, PasswordHash, UserType)
+            VALUES
+                (:userId, :userName, :userCell, :userPassword, 'doctor')"
+        );
         $stmt->bindParam(':userId', $new_id, \PDO::PARAM_INT);
         $stmt->bindParam(':userName', $user_name, \PDO::PARAM_STR);
         $stmt->bindParam(':userCell', $user_cell, \PDO::PARAM_STR);
@@ -48,16 +54,17 @@ function add_doctor($db, $user_name, $user_cell, $user_password, $doc_dep) {
         $stmt->execute();
 
         $stmt = $db->prepare(
-                "INSERT INTO doctors (DoctorID, FullName, DepartmentID)
-                    VALUES (
-                        :userId,
-                        :userName, -- 医生姓名
-                        (SELECT DepartmentID FROM departments WHERE Department = '眼科' -- 查询部门 ID
-                    )
-                );"
-            );
+            "INSERT INTO doctors (DoctorID, FullName, DepartmentID)
+                VALUES (
+                    :userId,
+                    :userName,
+                    (SELECT DepartmentID FROM departments WHERE Department = :dep_name -- 查询部门 ID
+                )
+            );"
+        );
         $stmt->bindParam(':userId', $new_id, \PDO::PARAM_INT);
         $stmt->bindParam(':userName', $user_name, \PDO::PARAM_STR);
+        $stmt->bindParam(':dep_name', $doc_dep, \PDO::PARAM_STR);
         $stmt->execute();
     } catch (\PDOException $e) {
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
@@ -66,8 +73,13 @@ function add_doctor($db, $user_name, $user_cell, $user_password, $doc_dep) {
 
 function add_patient($db, $user_name, $user_cell, $user_password, $patient_gender, $patient_age) {
     try {
-        $new_id = getNewId($db, 'patient');
-        $stmt = $db->prepare("INSERT INTO users (UserId, UserName, UserCell, PasswordHash, UserType) VALUES (:userId, :userName, :userCell, :userPassword, 'patient')");
+        $new_id = getNewUserId($db, 'patient');
+        $stmt = $db->prepare(
+            "INSERT INTO
+                users (UserId, Username, UserCell, PasswordHash, UserType)
+            VALUES
+                (:userId, :userName, :userCell, :userPassword, 'patient')"
+        );
         $stmt->bindParam(':userId', $new_id, \PDO::PARAM_INT);
         $stmt->bindParam(':userName', $user_name, \PDO::PARAM_STR);
         $stmt->bindParam(':userCell', $user_cell, \PDO::PARAM_STR);
@@ -85,6 +97,18 @@ function add_patient($db, $user_name, $user_cell, $user_password, $patient_gende
     }
 }
 
+function checkDuplicateCell($db, $userCell) {
+    try {
+        $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM users WHERE UserCell = :userCell");
+        $stmt->bindParam(':userCell', $userCell, \PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        throw new \Exception("Database query failed: ". $e->getMessage(), 500);
+    }
+}
+
+
 /* the function to handle the request */
 function handleRequest() {
     try {
@@ -98,24 +122,39 @@ function handleRequest() {
         }
 
         if (empty($_POST['user_type']) ||
-            empty($_POST['user_name']) ||
-            empty($_POST['user_cell']) ||
-            empty($_POST['user_password'])) {
+            empty($_POST['name']) ||
+            empty($_POST['cellphone']) ||
+            empty($_POST['password'])) {
             throw new \Exception("empty field", 400);
         }
 
-        if ($_POST['user_type'] == 'admin') {
-            
+        if ($_POST['user_type'] == 'doctor' && empty($_POST['doc_dep'])) {
+            throw new \Exception("empty field: doc_dep", 400);
+        } else if ($_POST['user_type'] == 'patient' && (empty($_POST['patient_gender']) || empty($_POST['patient_age']))) {
+            throw new \Exception("empty field: patient_gender or patient_age", 400);
         }
 
         $db = initializeDatabase();
 
-        $ret = Array(
-            "patients" => fetchPatientData($db),
-            "doctors" => fetchDoctorData($db)
-        );
+        /* check if the user already exists */
+        $duplicateCell = checkDuplicateCell($db, $_POST['cellphone']);
+        if ($duplicateCell['Count'] > 0) {
+            throw new \Exception("duplicate cellphone", 400);
+        }
+
+        $in_psd_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+        if ($_POST['user_type'] == 'admin') {
+            add_admin($db, $_POST['name'], $_POST['cellphone'], $in_psd_hash);
+        } else if ($_POST['user_type'] == 'doctor') {
+            add_doctor($db, $_POST['name'], $_POST['cellphone'], $in_psd_hash, $_POST['doc_dep']);
+        } else if ($_POST['user_type'] == 'patient') {
+            add_patient($db, $_POST['name'], $_POST['cellphone'], $in_psd_hash, $_POST['patient_gender'], $_POST['patient_age']);
+        }
+
+
         /* return success response */
-        echo ApiResponse::success($ret)->toJson();
+        echo ApiResponse::success($_POST['user_type'])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
