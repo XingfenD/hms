@@ -8,8 +8,12 @@
 
 /* set the response header to JSON */
 header('Content-Type: application/json');
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Credentials: true");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = ['http://localhost:5173'];
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+}
 header("Access-Control-Allow-Methods: POST");       /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 

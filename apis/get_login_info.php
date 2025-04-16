@@ -8,8 +8,12 @@
 
 /* set the response header to JSON */
 header('Content-Type: application/json');
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Credentials: true");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = ['http://localhost:5173'];
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+}
 header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
@@ -32,9 +36,22 @@ function handleRequest() {
             throw new \Exception("user not login", 401);
         }
 
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $client_ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $client_ip = $_SERVER['HTTP_CLIENT_IP'];
+        } else {
+            $client_ip = $_SERVER['REMOTE_ADDR'];
+        }
+
+        // Get client port
+        $client_port = $_SERVER['REMOTE_PORT'];
+
         $ss_data = Array(
             'user_id' => $_SESSION['user_id'],
-            'user_type' => $_SESSION['user_type']
+            'user_type' => $_SESSION['user_type'],
+            'client_ip' => $client_ip,
+            'client_port' => $client_port
         );
         /* return success response */
         echo ApiResponse::success($ss_data)->toJson();
