@@ -41,21 +41,19 @@ function handleRequest() {
         $doctorId = $_POST['doctorId'];
         $appointmentDate = $_POST['appointmentDate'];
         $appointmentTime = $_POST['appointmentTime'];
-        $appointmentType = $_POST['appointmentType'];
         $departmentId = $_POST['departmentId'];
 
         /* verify the arguments */
-        if (empty($patientId) || empty($doctorId) || empty($appointmentDate) || empty($appointmentTime) || empty($appointmentType) || empty($departmentId)) {
+        if (empty($patientId) || empty($doctorId) || empty($appointmentDate) || empty($appointmentTime) || empty($departmentId)) {
             throw new \Exception("empty field", 400);
         }
 
         // 插入新的挂号记录
-        $stmt = $db->prepare("INSERT INTO appointments (PatientID, DoctorID, AppointmentDate, AppointmentTime, AppointmentType, AppointmentStatus, DepartmentID) VALUES (:patientId, :doctorId, :appointmentDate, :appointmentTime, :appointmentType, '待就诊', :departmentId)");
+        $stmt = $db->prepare("INSERT INTO appointments (PatientID, DoctorID, AppointmentDate, AppointmentTime, AppointmentStatus, DepartmentID) VALUES (:patientId, :doctorId, :appointmentDate, :appointmentTime, '待就诊', :departmentId)");
         $stmt->bindParam(':patientId', $patientId, \PDO::PARAM_INT);
         $stmt->bindParam(':doctorId', $doctorId, \PDO::PARAM_INT);
         $stmt->bindParam(':appointmentDate', $appointmentDate, \PDO::PARAM_STR);
         $stmt->bindParam(':appointmentTime', $appointmentTime, \PDO::PARAM_STR);
-        $stmt->bindParam(':appointmentType', $appointmentType, \PDO::PARAM_STR);
         $stmt->bindParam(':departmentId', $departmentId, \PDO::PARAM_INT);
         $stmt->execute();
 

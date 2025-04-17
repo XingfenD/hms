@@ -39,7 +39,6 @@ function searchAppointments($db, $searchParams) {
                 p.Age AS PatientAge,
                 d.FullName AS DoctorName,
                 dept.Department AS DepartmentName,
-                a.AppointmentType,
                 CONCAT(a.AppointmentDate, ' ', a.AppointmentTime) AS AppointmentDateTime,
                 a.AppointmentStatus
             FROM
@@ -63,11 +62,6 @@ function searchAppointments($db, $searchParams) {
     if (isset($searchParams['doctorName']) && !empty($searchParams['doctorName'])) {
         $sql .= " AND d.FullName LIKE :doctorName";
         $params[':doctorName'] = '%' . $searchParams['doctorName'] . '%';
-    }
-
-    if (isset($searchParams['appointmentType']) && !empty($searchParams['appointmentType'])) {
-        $sql .= " AND a.AppointmentType = :appointmentType";
-        $params[':appointmentType'] = $searchParams['appointmentType'];
     }
 
     if (isset($searchParams['appointmentDate']) && !empty($searchParams['appointmentDate'])) {
@@ -105,7 +99,6 @@ function handleRequest() {
         $searchParams = [
             'patientName' => $_POST['patientName'] ?? '',
             'doctorName' => $_POST['doctorName'] ?? '',
-            'appointmentType' => $_POST['appointmentType'] ?? '',
             'appointmentDate' => $_POST['appointmentDate'] ?? '',
             'appointmentStatus' => $_POST['appointmentStatus'] ?? ''
         ];
@@ -114,7 +107,7 @@ function handleRequest() {
         $appointments = searchAppointments($db, $searchParams);
 
         // 返回成功响应
-        echo ApiResponse::success("Search successful", $appointments)->toJson();
+        echo ApiResponse::success($appointments)->toJson();
     } catch (Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

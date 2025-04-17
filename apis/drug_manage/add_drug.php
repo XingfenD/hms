@@ -2,7 +2,7 @@
 /**
  * @file apis/AddDrugApi.php
  * @brief API for adding a new drug
- * @author 
+ * @author xvjie
  * @date 2025-04-15
  */
 

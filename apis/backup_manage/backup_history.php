@@ -100,7 +100,7 @@ function handleRequest() {
         $backupHistory = getBackupHistory($backupDir);
 
         // 返回成功响应
-        echo ApiResponse::success($backupHistory, "获取备份历史记录成功")->toJson();
+        echo ApiResponse::success($backupHistory)->toJson();
     } catch (\Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
