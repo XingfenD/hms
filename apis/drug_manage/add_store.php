@@ -2,6 +2,7 @@
 /**
  * @file apis/AddStockApi.php
  * @brief API for increasing the stock quantity of a drug
+ * @author xvjie
  * @date 2025-04-15
  */
 
@@ -44,12 +45,15 @@ function handleRequest() {
         verifyMethods(['POST']);
         $db = initializeDatabase();
 
-        $input = json_decode(file_get_contents("php://input"), true);
-        if (empty($input['drug_name']) || !isset($input['add_quantity'])) {
-            throw new \Exception("Missing parameters: drug_name or add_quantity", 400);
+        // 获取 POST 请求中的数据
+        $drugName = $_POST['drug_name'] ?? '';
+        $addQuantity = intval($_POST['add_quantity'] ?? 0);
+
+        if (empty($drugName) || empty($addQuantity)) {
+            throw new \Exception("Missing required parameters", 400);
         }
 
-        $added = addDrugStock($db, $input['drug_name'], intval($input['add_quantity']));
+        $added = addDrugStock($db, $drugName, $addQuantity);
 
         if ($added > 0) {
             echo ApiResponse::success(["message" => "库存已增加"])->toJson();

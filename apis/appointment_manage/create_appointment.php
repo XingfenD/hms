@@ -3,7 +3,7 @@
  * @file apis/create_appointment.php
  * @brief the api to create an appointment record
  * @author xvjie
- * @date 2025-04-15
+ * @date 2025-04-18
  */
 
 /* set the response header to JSON */
@@ -32,33 +32,31 @@ function handleRequest() {
 
         verifyMethods(['POST']);
 
-        /* use initializeDatabase() function in utils/utils.php */
-        /* initialize the database connection */
-        $db = initializeDatabase();
+        // 建立数据库连接
+        $database = new Database();
+        $db = $database->connect();
 
         // 获取 POST 请求中的数据
-        $patientId = $_POST['patientId'];
-        $doctorId = $_POST['doctorId'];
-        $appointmentDate = $_POST['appointmentDate'];
-        $appointmentTime = $_POST['appointmentTime'];
-        $departmentId = $_POST['departmentId'];
+        $patientId = $_POST['patient_id'] ?? '';
+        $doctorId = $_POST['doctor_id'] ?? '';
+        $appointmentDate = $_POST['appointment_date'] ?? '';
+        $appointmentTime = $_POST['appointment_time'] ?? '';
 
         /* verify the arguments */
-        if (empty($patientId) || empty($doctorId) || empty($appointmentDate) || empty($appointmentTime) || empty($departmentId)) {
+        if (empty($patientId) || empty($doctorId) || empty($appointmentDate) || empty($appointmentTime)) {
             throw new \Exception("empty field", 400);
         }
 
-        // 插入新的挂号记录
-        $stmt = $db->prepare("INSERT INTO appointments (PatientID, DoctorID, AppointmentDate, AppointmentTime, AppointmentStatus, DepartmentID) VALUES (:patientId, :doctorId, :appointmentDate, :appointmentTime, '待就诊', :departmentId)");
+        // 插入新的挂号记录，修改 SQL 语句以匹配实际表名和字段名
+        $stmt = $db->prepare("INSERT INTO appointment (pat_id, doc_id, ap_date, ap_time, ap_status) VALUES (:patientId, :doctorId, :appointmentDate, :appointmentTime, '0')");
         $stmt->bindParam(':patientId', $patientId, \PDO::PARAM_INT);
         $stmt->bindParam(':doctorId', $doctorId, \PDO::PARAM_INT);
         $stmt->bindParam(':appointmentDate', $appointmentDate, \PDO::PARAM_STR);
         $stmt->bindParam(':appointmentTime', $appointmentTime, \PDO::PARAM_STR);
-        $stmt->bindParam(':departmentId', $departmentId, \PDO::PARAM_INT);
         $stmt->execute();
 
         /* return success response */
-        echo ApiResponse::success("appointment created successfully")->toJson();
+        echo ApiResponse::success(["message" => "挂号成功"])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

@@ -2,7 +2,8 @@
 /**
  * @file apis/UpdateStockApi.php
  * @brief API for updating drug stock quantity
- * @date 2025-04-15
+ * @author xvjie
+ * @date 2025-04-18
  */
 
 header('Content-Type: application/json');
@@ -32,7 +33,8 @@ use App\Database\Database;
  */
 function updateDrugStock($db, $drugName, $newStockQuantity) {
     try {
-        $stmt = $db->prepare("UPDATE drugs SET StockQuantity = :qty WHERE DrugName = :name");
+        // 修改 SQL 查询语句以匹配实际的表名和字段名
+        $stmt = $db->prepare("UPDATE drug_def SET drug_store = :qty WHERE drug_name = :name");
         $stmt->bindParam(':qty', $newStockQuantity, \PDO::PARAM_INT);
         $stmt->bindParam(':name', $drugName);
         return $stmt->execute();
@@ -50,17 +52,16 @@ function handleRequest() {
         }
 
         verifyMethods(['POST']);
-        $db = initializeDatabase();
+        $database = new Database();
+        $db = $database->connect();
 
-        // 获取 JSON 格式的 POST 请求数据
-        $input = json_decode(file_get_contents("php://input"), true);
+        // 获取 POST 请求中的数据
+        $drugName = $_POST['drug_name'] ?? '';
+        $newStockQuantity = intval($_POST['new_stock_quantity'] ?? 0);
 
-        if (empty($input['drug_name']) || !isset($input['new_stock_quantity'])) {
+        if (empty($drugName) || empty($newStockQuantity)) {
             throw new \Exception("Missing required parameters", 400);
         }
-
-        $drugName = $input['drug_name'];
-        $newStockQuantity = intval($input['new_stock_quantity']);
 
         $success = updateDrugStock($db, $drugName, $newStockQuantity);
 

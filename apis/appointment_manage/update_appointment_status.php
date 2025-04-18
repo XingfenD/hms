@@ -1,9 +1,9 @@
 <?php
 /**
  * @file apis/update_appointment_status.php
- * @brief the api to update the status of an appointment to "已签到"
+ * @brief the api to update the status of an appointment to "正在进行"
  * @author xvjie
- * @date 2025-04-15
+ * @date 2025-04-18
  */
 
 /* set the response header to JSON */
@@ -14,7 +14,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -27,7 +27,8 @@ use App\Database\Database;
 /* 验证指定的 AppointmentID 是否存在 */
 function checkAppointmentExists($db, $appointmentId) {
     try {
-        $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM appointments WHERE AppointmentID = :appointmentId");
+        // 修改 SQL 查询语句以匹配实际的表名和字段名
+        $stmt = $db->prepare("SELECT COUNT(*) AS Count FROM appointment WHERE ap_id = :appointmentId");
         $stmt->bindParam(':appointmentId', $appointmentId, \PDO::PARAM_INT);
         $stmt->execute();
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -37,10 +38,11 @@ function checkAppointmentExists($db, $appointmentId) {
     }
 }
 
-/* 更新指定 AppointmentID 的挂号记录状态为已签到 */
+/* 更新指定 AppointmentID 的挂号记录状态为正在进行 */
 function updateAppointmentStatus($db, $appointmentId) {
     try {
-        $stmt = $db->prepare("UPDATE appointments SET AppointmentStatus = '已就诊' WHERE AppointmentID = :appointmentId");
+        // 修改 SQL 查询语句以匹配实际的表名和字段名
+        $stmt = $db->prepare("UPDATE appointment SET ap_status = 1 WHERE ap_id = :appointmentId");
         $stmt->bindParam(':appointmentId', $appointmentId, \PDO::PARAM_INT);
         $stmt->execute();
     } catch (\PDOException $e) {
@@ -56,12 +58,12 @@ function handleRequest() {
 
         verifyMethods(['POST']);
 
-        /* use initializeDatabase() function in utils/utils.php */
-        /* initialize the database connection */
-        $db = initializeDatabase();
+        // 建立数据库连接
+        $database = new Database();
+        $db = $database->connect();
 
         // 获取 POST 请求中的数据
-        $appointmentId = $_POST['appointmentId'];
+        $appointmentId = $_POST['appointment_id'];
 
         /* verify the arguments */
         if (empty($appointmentId)) {
@@ -73,11 +75,11 @@ function handleRequest() {
             throw new \Exception("Appointment with the given ID does not exist", 404);
         }
 
-        // 更新挂号记录状态为已签到
+        // 更新挂号记录状态为正在进行
         updateAppointmentStatus($db, $appointmentId);
 
         /* return success response */
-        echo ApiResponse::success("Appointment status updated to '已就诊' successfully")->toJson();
+        echo ApiResponse::success(["message" => "挂号状态更新为‘进行中’"])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

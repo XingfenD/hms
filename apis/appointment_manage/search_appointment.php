@@ -3,7 +3,7 @@
  * @file apis/search_appointments.php
  * @brief 根据搜索条件查询挂号记录的 API
  * @author xvjie
- * @date 2025-04-16
+ * @date 2025-04-18
  */
 
 // 设置响应头为 JSON 格式
@@ -14,7 +14,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -26,60 +26,64 @@ use App\Database\Database;
 
 /**
  * 根据搜索条件查询挂号记录
- * @param PDO $db 数据库连接对象
+ * @param \PDO $db 数据库连接对象
  * @param array $searchParams 搜索参数数组
  * @return array 查询结果数组
- * @throws Exception 如果数据库查询失败
+ * @throws \Exception 如果数据库查询失败
  */
 function searchAppointments($db, $searchParams) {
     $sql = "SELECT
-                a.AppointmentID,
-                p.FullName AS PatientName,
-                p.Gender AS PatientGender,
-                p.Age AS PatientAge,
-                d.FullName AS DoctorName,
-                dept.Department AS DepartmentName,
-                CONCAT(a.AppointmentDate, ' ', a.AppointmentTime) AS AppointmentDateTime,
-                a.AppointmentStatus
+                a.ap_id AS AppointmentID,
+                a.pat_id AS PatientId,
+                ui.user_name AS PatientName,
+                ui.user_gender AS PatientGender,
+                ui.user_age AS PatientAge,
+                a.doc_id AS DoctorID,
+                dt.title_name AS DoctorTitle,
+                dept.dep_name AS DepartmentName,
+                CONCAT(a.ap_date, ' ', a.ap_time) AS AppointmentDateTime,
+                CASE a.ap_status
+                    WHEN 0 THEN '已预约'
+                    WHEN 1 THEN '正在进行'
+                    WHEN 2 THEN '已结束'
+                    ELSE '未知状态'
+                END AS AppointmentStatus
             FROM
-                appointments a
+                appointment a
             JOIN
-                patients p ON a.PatientID = p.PatientID
+                user_info ui ON a.pat_id = ui.user_id
             JOIN
-                doctors d ON a.DoctorID = d.DoctorID
+                doctor d ON a.doc_id = d.doc_id
             JOIN
-                departments dept ON a.DepartmentID = dept.DepartmentID
+                doc_title dt ON d.title_id = dt.title_id
+            JOIN
+                department dept ON d.dep_id = dept.dep_id
             WHERE
                 1 = 1";
 
     $params = [];
 
-    if (isset($searchParams['patientName']) && !empty($searchParams['patientName'])) {
-        $sql .= " AND p.FullName LIKE :patientName";
-        $params[':patientName'] = '%' . $searchParams['patientName'] . '%';
+    if (isset($searchParams['pat_id']) && !empty($searchParams['pat_id'])) {
+        $sql .= " AND a.pat_id = :pat_id";
+        $params[':pat_id'] = $searchParams['pat_id'];
     }
 
-    if (isset($searchParams['doctorName']) && !empty($searchParams['doctorName'])) {
-        $sql .= " AND d.FullName LIKE :doctorName";
-        $params[':doctorName'] = '%' . $searchParams['doctorName'] . '%';
+    if (isset($searchParams['doc_id']) && !empty($searchParams['doc_id'])) {
+        $sql .= " AND a.doc_id = :doc_id";
+        $params[':doc_id'] = $searchParams['doc_id'];
     }
 
-    if (isset($searchParams['appointmentDate']) && !empty($searchParams['appointmentDate'])) {
-        $sql .= " AND a.AppointmentDate = :appointmentDate";
-        $params[':appointmentDate'] = $searchParams['appointmentDate'];
-    }
-
-    if (isset($searchParams['appointmentStatus']) && !empty($searchParams['appointmentStatus'])) {
-        $sql .= " AND a.AppointmentStatus = :appointmentStatus";
-        $params[':appointmentStatus'] = $searchParams['appointmentStatus'];
+    if (isset($searchParams['ap_date']) && !empty($searchParams['ap_date'])) {
+        $sql .= " AND a.ap_date = :ap_date";
+        $params[':ap_date'] = $searchParams['ap_date'];
     }
 
     try {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        throw new Exception("Database query failed: " . $e->getMessage(), 500);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        throw new \Exception("Database query failed: " . $e->getMessage(), 500);
     }
 }
 
@@ -92,15 +96,15 @@ function handleRequest() {
         session_start();
         verifyMethods(['POST']);
 
-        // 初始化数据库连接
-        $db = initializeDatabase();
+        // 建立数据库连接
+        $database = new Database();
+        $db = $database->connect();
 
         // 获取 POST 请求中的搜索参数
         $searchParams = [
-            'patientName' => $_POST['patientName'] ?? '',
-            'doctorName' => $_POST['doctorName'] ?? '',
-            'appointmentDate' => $_POST['appointmentDate'] ?? '',
-            'appointmentStatus' => $_POST['appointmentStatus'] ?? ''
+            'pat_id' => $_POST['patient_id'] ?? '',
+            'doc_id' => $_POST['doctor_id'] ?? '',
+            'ap_date' => $_POST['appointment_date'] ?? ''
         ];
 
         // 执行搜索
@@ -108,7 +112,7 @@ function handleRequest() {
 
         // 返回成功响应
         echo ApiResponse::success($appointments)->toJson();
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
     }

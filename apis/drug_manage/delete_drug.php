@@ -2,7 +2,8 @@
 /**
  * @file apis/DeleteDrugApi.php
  * @brief API for deleting a drug by name
- * @date 2025-04-15
+ * @author xvjie
+ * @date 2025-04-18
  */
 
 header('Content-Type: application/json');
@@ -12,7 +13,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -20,10 +21,20 @@ require_once __DIR__ . '/../utils/Database.php';
 require_once __DIR__ . '/../utils/utils.php';
 
 use App\Response\ApiResponse;
+use App\Database\Database;
 
+/**
+ * 根据药品名称删除药品
+ *
+ * @param \PDO $db 数据库连接
+ * @param string $drugName 药品名称
+ * @return int 删除的行数
+ * @throws \Exception 如果数据库删除操作失败
+ */
 function deleteDrugByName($db, $drugName) {
     try {
-        $stmt = $db->prepare("DELETE FROM drugs WHERE DrugName = :name");
+        // 修改 SQL 查询语句以匹配实际的表名和字段名
+        $stmt = $db->prepare("DELETE FROM drug_def WHERE drug_name = :name");
         $stmt->bindParam(':name', $drugName);
         $stmt->execute();
         return $stmt->rowCount(); // 返回删除的行数
@@ -37,18 +48,21 @@ function handleRequest() {
         session_start();
 
         if (!isset($_SESSION["UserType"]) || $_SESSION["UserType"] !== "admin") {
-            //throw new \Exception("operation not permitted for current user", 401);
+            throw new \Exception("operation not permitted for current user", 401);
         }
 
         verifyMethods(['POST']);
-        $db = initializeDatabase();
+        $database = new Database();
+        $db = $database->connect();
 
-        $input = json_decode(file_get_contents("php://input"), true);
-        if (empty($input['drug_name'])) {
-            throw new \Exception("Missing parameter: drug_name", 400);
+        // 获取 POST 请求中的数据
+        $drugName = $_POST['drug_name'] ?? '';
+
+        if (empty($drugName)) {
+            throw new \Exception("Missing required parameter: drug_name", 400);
         }
 
-        $deleted = deleteDrugByName($db, $input['drug_name']);
+        $deleted = deleteDrugByName($db, $drugName);
 
         if ($deleted > 0) {
             echo ApiResponse::success(["message" => "药品已成功删除"])->toJson();

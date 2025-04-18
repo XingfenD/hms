@@ -10,7 +10,7 @@ namespace App\Database;
 
 class Database {
     private $host = 'localhost';
-    private $db_name = 'yiliao';
+    private $db_name = 'yiliao2';
     private $username = 'root';
     private $password = '3.1415926';
     private $conn;

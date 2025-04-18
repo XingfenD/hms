@@ -3,7 +3,7 @@
  * @file apis/get_doctor_schedules.php
  * @brief 获取指定时间范围内医生排班信息的 API
  * @author xvjie
- * @date 2025-04-16
+ * @date 2025-04-18
  */
 
 // 设置响应头为 JSON 格式
@@ -34,21 +34,21 @@ use App\Database\Database;
  */
 function getDoctorSchedulesByDateRange($db, $startDate, $endDate) {
     $sql = "SELECT
-                s.ScheduleID,
+                s.schedule_id,
+                s.doc_id AS doctor_id,
                 d.FullName AS DoctorName,
                 dept.Department,
-                s.ScheduleDate,
-                s.StartTime,
-                s.EndTime,
-                s.Shift
+                s.date AS ScheduleDate,
+                s.start_time AS StartTime,
+                s.end_time AS EndTime
             FROM
-                schedules s
+                schedule s
             JOIN
-                doctors d ON s.DoctorID = d.DoctorID
+                doctors d ON s.doc_id = d.DoctorID
             JOIN
-                departments dept ON s.DepartmentID = dept.DepartmentID
+                departments dept ON d.DepartmentID = dept.DepartmentId
             WHERE
-                s.ScheduleDate BETWEEN :startDate AND :endDate";
+                s.date BETWEEN :startDate AND :endDate";
 
     $params = [
         ':startDate' => $startDate,
@@ -88,7 +88,7 @@ function handleRequest() {
         $schedules = getDoctorSchedulesByDateRange($db, $startDate, $endDate);
 
         // 返回成功响应
-        echo ApiResponse::success("Search successful", $schedules)->toJson();
+        echo ApiResponse::success($schedules)->toJson();
     } catch (Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

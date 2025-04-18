@@ -14,7 +14,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: DELETE");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: POST");        /* 修改为 POST 请求方法 */
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -25,7 +25,7 @@ use App\Response\ApiResponse;
 use App\Database\Database;
 
 /**
- * Delete a user from the users table
+ * Delete a user from the user and related tables
  *
  * @param \PDO $db instance of database connection
  * @param int $userId user id
@@ -37,7 +37,7 @@ function deleteUser($db, $userId) {
         $db->beginTransaction();
 
         // 检查用户是否存在
-        $checkStmt = $db->prepare("SELECT * FROM users WHERE UserId = :userId");
+        $checkStmt = $db->prepare("SELECT * FROM user WHERE user_id = :userId");
         $checkStmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
         $checkStmt->execute();
 
@@ -45,24 +45,23 @@ function deleteUser($db, $userId) {
             throw new \Exception("User not found", 404);
         }
 
-        // 获取用户类型
-        $userType = $checkStmt->fetch(\PDO::FETCH_ASSOC)['UserType'];
+        // 获取用户权限
+        $userAuth = $checkStmt->fetch(\PDO::FETCH_ASSOC)['user_auth'];
 
         // 删除用户信息
-        $deleteStmt = $db->prepare("DELETE FROM users WHERE UserId = :userId");
+        $deleteStmt = $db->prepare("DELETE FROM user WHERE user_id = :userId");
         $deleteStmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
         $deleteStmt->execute();
 
-        // 根据用户类型删除相关表中的信息
-        if ($userType === "doctor") {
-            $deleteRelatedStmt = $db->prepare("DELETE FROM doctors WHERE DoctorID = :userId");
-            $deleteRelatedStmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
-            $deleteRelatedStmt->execute();
-        } elseif ($userType === "patient") {
-            $deleteRelatedStmt = $db->prepare("DELETE FROM patients WHERE PatientID = :userId");
-            $deleteRelatedStmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
-            $deleteRelatedStmt->execute();
+        // 根据用户权限删除相关表中的信息
+        if ($userAuth === 3) { // 医生权限
+            // 删除 doctor 表中的信息
+            $deleteDoctorStmt = $db->prepare("DELETE FROM doctor WHERE doc_uid = :userId");
+            $deleteDoctorStmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
+            $deleteDoctorStmt->execute();
         }
+
+        // 由于 user_info 表的外键设置为 ON DELETE CASCADE，删除 user 表记录时会自动删除关联的 user_info 记录
 
         // 提交事务
         $db->commit();
@@ -84,15 +83,14 @@ function handleRequest() {
             throw new \Exception("operation not permitted for current user", 403);
         }
 
-        verifyMethods(['DELETE']);
+        verifyMethods(['POST']); // 修改为验证 POST 请求方法
 
         /* use initializeDatabase() function in utils/utils.php */
         /* initialize the database connection */
         $db = initializeDatabase();
 
-        // Get the user ID from the request
-        parse_str(file_get_contents("php://input"), $deleteData);
-        $userId = isset($deleteData['userId']) ? intval($deleteData['userId']) : null;
+        // Get the user ID from the POST request
+        $userId = isset($_POST['userId']) ? intval($_POST['userId']) : null;
 
         /* verify the arguments */
         if (empty($userId)) {
@@ -103,7 +101,7 @@ function handleRequest() {
         deleteUser($db, $userId);
 
         /* return success response */
-        echo ApiResponse::success("User deleted successfully")->toJson();
+        echo ApiResponse::success(["message" => "用户删除成功"])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
