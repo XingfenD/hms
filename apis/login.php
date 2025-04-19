@@ -33,7 +33,16 @@ use App\Database\Database;
  */
 function fetchLoginInfoByCellphone($db, $user_cell, $user_type) {
     try {
-        $stmt = $db->prepare("SELECT UserId, PasswordHash, UserType FROM users WHERE UserCell = :cell AND UserType = :user_type");
+        $stmt = $db->prepare("
+            SELECT
+                UserID as UserId,
+                PasswordHash,
+                UserType
+            FROM users
+            WHERE
+                UserCell = :cell
+            AND UserType = :user_type"
+        );
         $stmt->bindParam(':cell', $user_cell, \PDO::PARAM_STR);
         $stmt->bindParam(':user_type', $user_type, \PDO::PARAM_STR);
         $stmt->execute();
@@ -54,7 +63,7 @@ function fetchLoginInfoByUserAcc($db, $user_acc, $user_type) {
             FROM user AS u
             LEFT JOIN auth_def as ad
             ON u.user_auth = ad.auth_id
-            WHERE 
+            WHERE
                 u.user_acc = :in_acc
                 AND ad.auth_name = :in_auth"
         );
@@ -90,7 +99,6 @@ function handleRequest() {
         $db_userInfo = fetchLoginInfoByCellphone($db, $in_user_cell, $in_user_type);
         $db_userInfo2 = fetchLoginInfoByUserAcc($db, $in_user_cell, $in_user_type);
         $db_final_user_info = (!$db_userInfo)? $db_userInfo2: $db_userInfo;
-
         if (!$db_final_user_info) {
             throw new \Exception("user doesn't exist", 404);
         } else if (count($db_final_user_info) > 1) {

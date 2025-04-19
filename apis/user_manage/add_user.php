@@ -42,7 +42,7 @@ function getNewUserID($db) {
     }
 }
 
-function add_user($db, $user, $userName, $userAcc, $userCell, $userPassword, $userGender, $userAge, $userType) {
+function add_user($db, $userName, $userAcc, $userCell, $userPassword, $userGender, $userAge, $userType) {
     $newUserID = getNewUserID($db);
     try {
         $db->beginTransaction();
@@ -52,13 +52,12 @@ function add_user($db, $user, $userName, $userAcc, $userCell, $userPassword, $us
                 :user_id,
                 :user_acc,
                 :pass_hash,
-                (SELECT auth_id FROM authdef WHERE auth_name = :user_type));"
+                (SELECT auth_id FROM auth_def WHERE auth_name = :user_type));"
         );
         $stmt->bindParam(':user_id', $newUserID, \PDO::PARAM_INT);
         $stmt->bindParam(':user_acc', $userAcc, \PDO::PARAM_STR);
         $stmt->bindParam(':pass_hash', $userPassword, \PDO::PARAM_STR);
         $stmt->bindParam(':user_type', $userType, \PDO::PARAM_STR);
-        $stmt->bindParam(':user_auth', $userPassword, \PDO::PARAM_STR);
         $stmt->execute();
 
         $stmt = $db->prepare(
@@ -78,6 +77,7 @@ function add_user($db, $user, $userName, $userAcc, $userCell, $userPassword, $us
         $stmt->bindParam(':age', $userAge, \PDO::PARAM_INT);
         $stmt->execute();
         $db->commit();
+        return $newUserID;
     } catch (\PDOException $e) {
         $db->rollBack();
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
@@ -96,44 +96,34 @@ function handleRequest() {
             throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 
-        if (empty($_POST['user_type']) ||
-            empty($_POST['user_acc']) ||
-            empty($_POST['name']) ||
-            empty($_POST['cellphone']) ||
-            empty($_POST['password']) ||
-            empty($_POST['gender']) ||
-            empty($_POST['age'])) {
-            throw new \Exception("empty field", 400);
-        }
+        $fields = ['user_type', 'account', 'name', 'cellphone', 'password', 'gender', 'age'];
 
+        foreach ($fields as $field) {
+            if (empty($_POST[$field])) {
+                throw new \Exception("empty field: {$field}", 400);
+            }
+        }
         if ($_POST['user_type'] == '医生' && empty($_POST['doc_dep'])) {
             throw new \Exception("empty field: doc_dep", 400);
         }
 
         $db = initializeDatabase();
 
-        $db_user_id = getNewUserId($db);
-
-        try {
-            $db->beginTransaction();
-            $in_user_id = getNewUserId($db);
-            $db->beginTransaction();
-            $stmt = $db->prepare(
-                "INSERT INTO user (user_id, user_acc, pass_hash, user_auth)
-                VALUES (:user_id, :user_acc, :pass_hash, 4)"
-            );
-            $stmt->bindParam(':user_id', $db_user_id, \PDO::PARAM_INT);
-            $stmt->bindValue(':user_acc', $userCell, \PDO::PARAM_STR);
-            $stmt->bindParam(':user_acc', $userCell, \PDO::PARAM_STR);
-            $stmt->bindParam(':pass_hash', $userPassword, \PDO::PARAM_STR);
-            $stmt->execute();
-        }
-
         $in_psd_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
+        add_user(
+            $db,
+            $_POST['name'],
+            $_POST['account'],
+            $_POST['cellphone'],
+            $in_psd_hash,
+            $_POST['gender'],
+            $_POST['age'],
+            $_POST['user_type']
+        );
 
         /* return success response */
-        echo ApiResponse::success($_POST['user_type'])->toJson();
+        echo ApiResponse::success($_POST['account'])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

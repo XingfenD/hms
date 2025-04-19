@@ -72,6 +72,7 @@ function registerPatient($db, $userName, $userAcc, $userCell, $userPassword, $us
         $stmt->bindParam(':age', $userAge, \PDO::PARAM_INT);
         $stmt->execute();
         $db->commit();
+        return $userId;
     } catch (\PDOException $e) {
         $db->rollBack();
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
@@ -81,7 +82,6 @@ function registerPatient($db, $userName, $userAcc, $userCell, $userPassword, $us
 /* the function to handle the request */
 function handleRequest() {
     try {
-        /* use verifyMethods function in utils/utils.php */
         session_start();
 
         verifyMethods(['POST']);
@@ -97,18 +97,17 @@ function handleRequest() {
         $in_age = $_POST['age'];
 
         /* verify the arguments */
-        if (empty($in_user_cell) || empty($in_user_name) || empty($in_password)) {
-            throw new \Exception("empty field", 400);
-        }
+        $fields = ['account', 'name', 'cellphone', 'password', 'gender', 'age'];
 
-        /* query the max user id  */
-        $newPatientId = getNewUserId($db);
-        /* NOTE: may need error handling */
+        foreach ($fields as $field) {
+            if (empty($_POST[$field])) {
+                throw new \Exception("empty field: {$field}", 400);
+            }
+        }
 
         $in_psd_hash = password_hash($in_password, PASSWORD_DEFAULT);
 
-        /* insert the new user */
-        registerPatient($db, $newPatientId, $in_user_name, $in_user_cell, $in_psd_hash, $in_gender, $in_age);
+        $newPatientId = registerPatient($db, $in_user_name, $in_user_acc, $in_user_cell, $in_psd_hash, $in_gender, $in_age);
 
         /* return success response */
         echo ApiResponse::success($newPatientId)->toJson();
