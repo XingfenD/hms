@@ -65,7 +65,7 @@ function handleRequest() {
 
         verifyMethods(['POST']);
 
-        if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != "admin") {
+        if (!isset($_SESSION['UserType']) || $_SESSION['UserType'] != "admin") {
             throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 

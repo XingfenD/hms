@@ -41,24 +41,31 @@ function fetchLoginInfoByCellphone($db, $user_cell, $user_type) {
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     } catch (\PDOException $e) {
         throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
-        return null;
     }
 }
 
-function fetchLoginInfoByUsername($db, $user_name, $user_type) {
+function fetchLoginInfoByUserAcc($db, $user_acc, $user_type) {
     try {
-        $stmt = $db->prepare("SELECT UserId, PasswordHash, UserType FROM users WHERE Username = :name AND UserType = :user_type");
-        $stmt->bindParam(':name', $user_name, \PDO::PARAM_STR);
-        $stmt->bindParam(':user_type', $user_type, \PDO::PARAM_STR);
+        $stmt = $db->prepare(
+            "SELECT
+                u.user_id AS UserId,
+                u.pass_hash AS PasswordHash,
+                ad.auth_name AS UserType
+            FROM user AS u
+            LEFT JOIN auth_def as ad
+            ON u.user_auth = ad.auth_id
+            WHERE 
+                u.user_acc = :in_acc
+                AND ad.auth_name = :in_auth"
+        );
+        $stmt->bindParam(':in_acc', $user_acc, \PDO::PARAM_STR);
+        $stmt->bindParam(':in_auth', $user_type, \PDO::PARAM_STR);
         $stmt->execute();
-
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     } catch (\PDOException $e) {
-        throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
-        return null;
+        throw new \Exception ("Database query failed: ". $e->getMessage(), 500);
     }
 }
-
 /* the function to handle the request */
 function handleRequest() {
     try {
@@ -81,13 +88,7 @@ function handleRequest() {
 
         /* query the login info */
         $db_userInfo = fetchLoginInfoByCellphone($db, $in_user_cell, $in_user_type);
-        $db_userInfo2 = fetchLoginInfoByUserName($db, $in_user_cell, $in_user_type);
-        // if (!$db_userInfo && !$db_userInfo2) {
-        //     throw new \Exception("user doesn't exist", 404);
-        // } else if (count($db_userInfo) + count($db_userInfo2) > 1) {
-        //     throw new \Exception("duplicate cellphone or name", 500);
-        // }
-
+        $db_userInfo2 = fetchLoginInfoByUserAcc($db, $in_user_cell, $in_user_type);
         $db_final_user_info = (!$db_userInfo)? $db_userInfo2: $db_userInfo;
 
         if (!$db_final_user_info) {
@@ -96,17 +97,17 @@ function handleRequest() {
             throw new \Exception("duplicate cellphone or name", 500);
         }
 
-        $db_psd_hash = $db_final_user_info[0]["PasswordHash"];
-        $db_user_type = $db_final_user_info[0]["UserType"];
-        $db_user_id = $db_final_user_info[0]["UserId"];
+        $db_psd_hash = $db_final_user_info[0]['PasswordHash'];
+        $db_user_type = $db_final_user_info[0]['UserType'];
+        $db_user_id = $db_final_user_info[0]['UserId'];
 
         if (!password_verify($in_password, $db_psd_hash)) {
             throw new \Exception("cellphone or password error", 401);
         }
 
         /* TODO: the logic below is possible to be changed */
-        $_SESSION["user_id"] = $db_user_id;
-        $_SESSION["user_type"] = $db_user_type;
+        $_SESSION["UserID"] = $db_user_id;
+        $_SESSION["UserType"] = $db_user_type;
 
         /* return success response */
         echo ApiResponse::success("login success")->toJson();

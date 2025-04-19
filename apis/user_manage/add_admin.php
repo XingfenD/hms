@@ -24,21 +24,21 @@ require_once __DIR__ . '/../utils/utils.php';
 use App\Response\ApiResponse;
 use App\Database\Database;
 
-function add_admin($db, $user_name, $user_cell, $user_password) {
-    $new_id = getNewUserId($db, 'admin');
+function add_admin($db, $user_name, $user_acc, $user_password) {
+    $new_id = getNewUserId($db);
+    $db->beginTransaction();
     try {
         $stmt = $db->prepare(
-            "INSERT INTO
-                users (UserId, UserType, Username, UserCell, PasswordHash)
-            VALUES
-                (:new_id, 'admin', :user_name, :user_cell, :user_pass);"
+            "INSERT INTO user (user_id, user_acc, user_auth)
+            VALUES (:new_id, :user_acc, :user_pass)"
         );
         $stmt->bindParam(':new_id', $new_id, \PDO::PARAM_INT);
-        $stmt->bindParam(':user_name', $user_name, \PDO::PARAM_STR);
-        $stmt->bindParam(':user_cell', $user_cell, \PDO::PARAM_STR);
+        $stmt->bindParam(':user_acc', $user_name, \PDO::PARAM_STR);
         $stmt->bindParam(':user_pass', $user_password, \PDO::PARAM_STR);
         $stmt->execute();
+        $db->commit();
     } catch (\PDOException $e) {
+        $db->rollback();
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
     }
 }
@@ -51,7 +51,7 @@ function handleRequest() {
 
         verifyMethods(['POST']);
 
-        if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != "admin") {
+        if (!isset($_SESSION['UserType']) || $_SESSION['UserType'] != "admin") {
             throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 

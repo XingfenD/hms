@@ -89,7 +89,6 @@ function fetchAdminData($db) {
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     } catch (\PDOException $e) {
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
-        return null;
     }
 }
 
@@ -101,7 +100,7 @@ function handleRequest() {
 
         verifyMethods(['GET']);
 
-        if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != "admin") {
+        if (!isset($_SESSION['UserType']) || $_SESSION['UserType'] != "admin") {
             throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 

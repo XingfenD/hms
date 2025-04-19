@@ -41,7 +41,6 @@ function fetchUserData($db, $userId) {
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     } catch (\PDOException $e) {
         throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
-        return null;
     }
 }
 

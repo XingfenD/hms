@@ -32,7 +32,7 @@ function handleRequest() {
 
         verifyMethods(['GET']);
 
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type'])) {
+        if (!isset($_SESSION['UserID']) || !isset($_SESSION['UserType'])) {
             throw new \Exception("user not login", 401);
         }
 
@@ -48,8 +48,8 @@ function handleRequest() {
         $client_port = $_SERVER['REMOTE_PORT'];
 
         $ss_data = Array(
-            'user_id' => $_SESSION['user_id'],
-            'user_type' => $_SESSION['user_type'],
+            'user_id' => $_SESSION['UserID'],
+            'user_type' => $_SESSION['UserType'],
             'client_ip' => $client_ip,
             'client_port' => $client_port
         );
