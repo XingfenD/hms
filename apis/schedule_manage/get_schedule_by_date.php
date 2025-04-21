@@ -76,8 +76,8 @@ function handleRequest() {
         $db = initializeDatabase();
 
         // 获取 GET 请求中的开始日期和结束日期
-        $startDate = $_GET['startDate'] ?? '';
-        $endDate = $_GET['endDate'] ?? '';
+        $startDate = $_GET['start_date'] ?? '';
+        $endDate = $_GET['end_date'] ?? '';
 
         // 验证日期参数
         if (empty($startDate) || empty($endDate)) {

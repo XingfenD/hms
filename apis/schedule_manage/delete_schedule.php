@@ -29,7 +29,7 @@ function handleRequest() {
         verifyMethods(['POST']);
 
         if ($_SESSION["UserType"] !== "admin") {
-            //throw new \Exception("operation not permitted for current user", 403);
+            throw new \Exception("operation not permitted for current user", 403);
         }
 
         $db = initializeDatabase();
