@@ -45,7 +45,6 @@ function getNewUserID($db) {
 function add_user($db, $userName, $userAcc, $userCell, $userPassword, $userGender, $userAge, $userType) {
     $newUserID = getNewUserID($db);
     try {
-        $db->beginTransaction();
         $stmt = $db->prepare(
             "INSERT INTO user (user_id, user_acc, pass_hash, user_auth)
             VALUES (
@@ -76,10 +75,8 @@ function add_user($db, $userName, $userAcc, $userCell, $userPassword, $userGende
         }
         $stmt->bindParam(':age', $userAge, \PDO::PARAM_INT);
         $stmt->execute();
-        $db->commit();
         return $newUserID;
     } catch (\PDOException $e) {
-        $db->rollBack();
         throw new \Exception("Database query failed: ". $e->getMessage(), 500);
     }
 }
@@ -106,21 +103,42 @@ function handleRequest() {
         if ($_POST['user_type'] == '医生' && empty($_POST['doc_dep'])) {
             throw new \Exception("empty field: doc_dep", 400);
         }
+        if ($_POST['user_type'] == '医生' && empty($_POST['doc_title'])) {
+            throw new \Exception("empty field: doc_dep", 400);
+        }
 
         $db = initializeDatabase();
 
         $in_psd_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-        add_user(
-            $db,
-            $_POST['name'],
-            $_POST['account'],
-            $_POST['cellphone'],
-            $in_psd_hash,
-            $_POST['gender'],
-            $_POST['age'],
-            $_POST['user_type']
-        );
+        try {
+            $db->beginTransaction();
+            $new_user_id = add_user(
+                $db,
+                $_POST['name'],
+                $_POST['account'],
+                $_POST['cellphone'],
+                $in_psd_hash,
+                $_POST['gender'],
+                $_POST['age'],
+                $_POST['user_type']
+            );
+
+            $stmt = $db->prepare(
+                "INSERT INTO doctor (doc_uid, dep_id, title_id) VALUES (:uid, (SELECT dep_name FROM department WHERE dep_name = :doc_dep), (SELECT title_name FROM doc_title WHERE title_name = :doc_title))"
+            );
+            $stmt->bindParam(":uid", $new_user_id);
+            $stmt->bindParam(":doc_dep", $doc_dep);
+            $stmt->bindParam(":doc_dep", $doc_title);
+
+            $db->commit();
+        } catch (\PDOException $e) {
+            $db->rollback();
+            throw new \Exception("Database query failed: ". $e->getMessage(), 500);
+        }
+
+
+
 
         /* return success response */
         echo ApiResponse::success($_POST['account'])->toJson();
