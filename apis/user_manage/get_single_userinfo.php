@@ -1,7 +1,7 @@
 <?php
 /**
- * @file apis/user_manage/add_user.php
- * @brief add a user(admin/doctor/patient)
+ * @file apis/user_manage/get_user_data.php
+ * @brief get the users' data of the three user_type
  * @author xingfen
  * @date 2025-04-13
  */
@@ -14,7 +14,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: POST");        /* NOTE: change the allow method for each single api */
+header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -24,50 +24,36 @@ require_once __DIR__ . '/../utils/utils.php';
 use App\Response\ApiResponse;
 use App\Database\Database;
 
-function delete_user($db, $user_acc) {
-    try {
-        $db->beginTransaction();
-        $stmt = $db->prepare("
-            DELETE FROM user
-            WHERE user_id = :user_acc"
-        );
-
-        $stmt->bindParam(":user_acc", $user_acc);
-        $stmt->execute();
-
-        $db->commit();
-    } catch (\PDOException $e) {
-        $db->rollback();
-        throw new \Exception ("Database query failed: " . $e->getMessage(), 500);
-    }
-}
-
 /* the function to handle the request */
 function handleRequest() {
     try {
         /* use verifyMethods function in utils/utils.php */
         session_start();
 
-        verifyMethods(['POST']);
+        verifyMethods(['GET']);
 
-        if (!isset($_SESSION['UserType']) || $_SESSION['UserType'] != "admin") {
+        if (!isset($_SESSION['UserType'])/* || $_SESSION['UserType'] != "admin"*/) {
             throw new \Exception("user not logged in or operation not permitted for current user", 401);
         }
 
-        $fields = ['user_id'];
-
-        foreach ($fields as $field) {
-            if (empty($_POST[$field])) {
-                throw new \Exception("empty field: {$field}", 400);
-            }
+        if (!isset($_GET['user_id'])) {
+            throw new \Exception("empty field: user_id", 401);
         }
 
         $db = initializeDatabase();
 
-        delete_user($db, $_POST['user_id']);
-
+        $stmt = $db->prepare("
+            SELECT
+                UserID, UserAccount, Username, UserType, UserCell
+            FROM
+                users
+            WHERE UserID = :user_id;
+        ");
+        $stmt->bindParam(':user_id', $_GET['user_id'], \PDO::PARAM_INT);
+        $stmt->execute();
+        $ret = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         /* return success response */
-        echo ApiResponse::success($_POST['user_id'])->toJson();
+        echo ApiResponse::success($ret)->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();

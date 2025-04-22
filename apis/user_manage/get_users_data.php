@@ -29,6 +29,7 @@ function fetchPatientData($db) {
         $stmt = $db->prepare(
             "SELECT
                 p.PatientID,
+                u.UserAccount,
                 p.FullName,
                 p.Gender,
                 p.Age,
@@ -38,7 +39,8 @@ function fetchPatientData($db) {
             JOIN
                 users u
             ON
-                p.PatientID = u.UserID;"
+                p.PatientID = u.UserID;
+            "
         );
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -52,6 +54,7 @@ function fetchDoctorData($db) {
         $stmt = $db->prepare(
             "SELECT
                 d.DoctorID,
+                u.UserAccount,
                 d.FullName,
                 dep.Department,
                 u.UserCell
@@ -73,11 +76,32 @@ function fetchDoctorData($db) {
     }
 }
 
+function fetchDrugAdminData($db) {
+    try {
+        $stmt = $db->prepare(
+            "SELECT
+                UserID,
+                UserAccount,
+                Username,
+                UserCell
+            FROM
+                users
+            WHERE
+                UserType = '药房管理员';"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        throw new \Exception("Database query failed: ". $e->getMessage(), 500);
+    }
+}
+
 function fetchAdminData($db) {
     try {
         $stmt = $db->prepare(
             "SELECT
                 UserID,
+                UserAccount,
                 Username,
                 UserCell
             FROM
@@ -109,7 +133,8 @@ function handleRequest() {
         $ret = Array(
             "patients" => fetchPatientData($db),
             "doctors" => fetchDoctorData($db),
-            "admins" => fetchAdminData($db)
+            "admins" => fetchAdminData($db),
+            "drugadmins" => fetchDrugAdminData($db)
         );
         /* return success response */
         echo ApiResponse::success($ret)->toJson();

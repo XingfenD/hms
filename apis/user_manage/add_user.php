@@ -123,14 +123,19 @@ function handleRequest() {
                 $_POST['age'],
                 $_POST['user_type']
             );
+            if ($_POST['user_type'] == '医生') {
+                $doc_dep = $_POST['doc_dep'];
+                $doc_title = $_POST['doc_title'];
+    
+                $stmt = $db->prepare(
+                    "INSERT INTO doctor (doc_uid, dep_id, title_id) VALUES (:uid, (SELECT dep_id FROM department WHERE dep_name = :doc_dep), (SELECT title_id FROM doc_title WHERE title_name = :doc_title))"
+                );
+                $stmt->bindParam(":uid", $new_user_id);
+                $stmt->bindParam(":doc_dep", $doc_dep);
+                $stmt->bindParam(":doc_title", $doc_title);
+                $stmt->execute();
 
-            $stmt = $db->prepare(
-                "INSERT INTO doctor (doc_uid, dep_id, title_id) VALUES (:uid, (SELECT dep_name FROM department WHERE dep_name = :doc_dep), (SELECT title_name FROM doc_title WHERE title_name = :doc_title))"
-            );
-            $stmt->bindParam(":uid", $new_user_id);
-            $stmt->bindParam(":doc_dep", $doc_dep);
-            $stmt->bindParam(":doc_dep", $doc_title);
-
+            }
             $db->commit();
         } catch (\PDOException $e) {
             $db->rollback();
