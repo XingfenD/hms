@@ -3,7 +3,7 @@
  * @file apis/AddDrugApi.php
  * @brief API for adding a new drug
  * @author xvjie
- * @date 2025-04-18
+ * @date 2025-04-22
  */
 
 header('Content-Type: application/json');
@@ -31,11 +31,10 @@ use App\Database\Database;
  * @param float $price 药品价格
  * @return bool 是否添加成功
  */
-function addDrug($db, $drugName, $stockQuantity, $price) {
+function addDrug($db, $drugName, $price) {
     try {
-        $stmt = $db->prepare("INSERT INTO drug_def (drug_name, drug_store, drug_price) VALUES (:name, :qty, :price)");
+        $stmt = $db->prepare("INSERT INTO drug_def (drug_name, drug_store, drug_price) VALUES (:name, 0, :price)");
         $stmt->bindParam(':name', $drugName);
-        $stmt->bindParam(':qty', $stockQuantity, \PDO::PARAM_INT);
         $stmt->bindParam(':price', $price);
         return $stmt->execute();
     } catch (\PDOException $e) {
@@ -52,18 +51,18 @@ function handleRequest() {
         }
 
         verifyMethods(['POST']);
-        $db = initializeDatabase();
+        $database = new Database();
+        $db = $database->connect();
 
         // 获取 POST 请求中的数据
         $drugName = $_POST['drug_name'] ?? '';
-        $stockQuantity = intval($_POST['stock_quantity'] ?? 0);
         $price = floatval($_POST['price'] ?? 0);
 
-        if (empty($drugName) || empty($stockQuantity) || empty($price)) {
+        if (empty($drugName) || empty($price)) {
             throw new \Exception("Missing required parameters", 400);
         }
 
-        $result = addDrug($db, $drugName, $stockQuantity, $price);
+        $result = addDrug($db, $drugName, $price);
 
         if ($result) {
             echo ApiResponse::success(["message" => "药品添加成功！"])->toJson();
