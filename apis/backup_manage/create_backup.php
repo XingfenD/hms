@@ -58,53 +58,39 @@ function backupDatabase($db, $backupDir) {
         mkdir($backupDir, 0777, true);
     }
 
+    // 创建 Database 实例并获取连接参数
+    $database = new Database();
+    $params = $database->getConnectionParams();
+    $servername = $params['host'];
+    $dbname = $params['db_name'];
+    $username = $params['username'];
+    $password = $params['password'];
+    
     // 生成备份文件名
-    $backupFileName = $backupDir . '/backup_' . date('YmdHis') . '.sql';
+    $backupFile = $backupDir . '/backup_' . date('YmdHis') . '.sql';
 
-    try {
-        // 获取数据库名
-        $databaseName = $db->query("SELECT DATABASE()")->fetchColumn();
+    // 构建 mysqldump 命令
+    $command = "mysqldump --user={$username} --password={$password} --host={$servername} {$dbname} > {$backupFile}";
 
-        // 打开文件以写入备份内容
-        $file = fopen($backupFileName, 'w');
+    // 执行命令
+    exec($command, $output, $returnCode);
 
-        // 备份表结构
-        $tables = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
-        foreach ($tables as $table) {
-            $createTableQuery = $db->query("SHOW CREATE TABLE $table")->fetch(PDO::FETCH_ASSOC);
-            fwrite($file, $createTableQuery['Create Table'] . ";\n\n");
-
-            // 备份表数据
-            $rows = $db->query("SELECT * FROM $table");
-            while ($row = $rows->fetch(PDO::FETCH_ASSOC)) {
-                $columns = implode(', ', array_keys($row));
-                $values = implode(', ', array_map(function ($value) use ($db) {
-                    return $db->quote($value);
-                }, $row));
-                $insertQuery = "INSERT INTO $table ($columns) VALUES ($values);\n";
-                fwrite($file, $insertQuery);
-            }
-            fwrite($file, "\n");
-        }
-
-        // 关闭文件
-        fclose($file);
-
-        // 获取文件大小
-        $fileSize = filesize($backupFileName);
-        $formattedFileSize = formatBytes($fileSize);
-
-        // 获取备份时间
-        $backupTime = date('Y-m-d H:i:s');
-
-        return [
-            'backupFileName' => basename($backupFileName),
-            'fileSize' => $formattedFileSize,
-            'backupTime' => $backupTime
-        ];
-    } catch (PDOException $e) {
-        throw new Exception("Database backup failed: " . $e->getMessage(), 500);
+    if ($returnCode !== 0) {
+        throw new Exception("Database backup failed: " . implode("\n", $output), 500);
     }
+
+    // 获取文件大小
+    $fileSize = filesize($backupFile);
+    $formattedFileSize = formatBytes($fileSize);
+
+    // 获取备份时间
+    $backupTime = date('Y-m-d H:i:s');
+
+    return [
+        'backupFileName' => basename($backupFile),
+        'fileSize' => $formattedFileSize,
+        'backupTime' => $backupTime
+    ];
 }
 
 /**
@@ -115,8 +101,9 @@ function handleRequest() {
         // 验证请求方法
         verifyMethods(['GET']);
 
-        // 初始化数据库连接
-        $db = initializeDatabase();
+        // 建立数据库连接
+        $database = new Database();
+        $db = $database->connect();
 
         // 备份目录
         $backupDir = realpath(__DIR__ . '/../../backup');
