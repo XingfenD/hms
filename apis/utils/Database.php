@@ -11,8 +11,8 @@ namespace App\Database;
 class Database {
     private $host = 'localhost';
     private $db_name = 'yiliao2';
-    private $username = 'root';
-    private $password = '3.1415926';
+    private $username = 'yiliao';
+    private $password = 'yiliao123';
     private $conn;
 
     /* connect the database and return the PDO instance */
