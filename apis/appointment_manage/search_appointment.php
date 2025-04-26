@@ -46,14 +46,21 @@ function searchAppointments($db, $searchParams) {
                 ui_doctor.user_gender AS DoctorGender,
                 ui_doctor.user_name AS DoctorName,
                 ui_doctor.user_age AS DoctorAge,
-                a.ap_sc_id AS AppointmentScheduleID,
                 CASE a.ap_status
                     WHEN 0 THEN '已预约'
                     WHEN 1 THEN '正在进行'
                     WHEN 2 THEN '已结束'
+                    WHEN 3 THEN '过号'
+                    WHEN 4 THEN '患者已签到'
                     ELSE '未知状态'
                 END AS AppointmentStatus,
-                CONCAT(a.ap_date, ' ', a.ap_time) AS AppointmentDateTime
+                CONCAT(a.ap_date, ' ', a.ap_time) AS AppointmentDateTime,
+                ei.exam_name AS ExaminationName,
+                ei.exam_price AS ExaminationPrice,
+                ei.exam_result AS ExaminationResult,
+                pi.drug_name AS DrugName,
+                pi.oper_amount AS DrugQuantity,
+                pi.drug_price * pi.oper_amount AS DrugSumPrice
             FROM
                 appointment a
             JOIN
@@ -66,6 +73,10 @@ function searchAppointments($db, $searchParams) {
                 department dept ON d.dep_id = dept.dep_id
             JOIN
                 user_info ui_doctor ON d.doc_uid = ui_doctor.user_id
+            LEFT JOIN
+                exam_info ei ON a.ap_id = ei.ap_id
+            LEFT JOIN
+                pres_info pi ON a.ap_id = pi.ap_id
             WHERE
                 1 = 1";
 
@@ -117,15 +128,28 @@ function searchAppointments($db, $searchParams) {
 
             $app_if = [
                 'AppointmentID' => $result['AppointmentID'],
-                'AppointmentScheduleID' => $result['AppointmentScheduleID'],
                 'AppointmentStatus' => $result['AppointmentStatus'],
                 'AppointmentDateTime' => $result['AppointmentDateTime']
+            ];
+
+            $exam_if = [
+                'ExaminationName' => $result['ExaminationName'],
+                'ExaminationPrice' => $result['ExaminationPrice'],
+                'ExaminationResult' => $result['ExaminationResult']
+            ];
+
+            $pres_if = [
+                'DrugName' => $result['DrugName'],
+                'DrugQuantity' => $result['DrugQuantity'],
+                'DrugSumPrice' => $result['DrugSumPrice']
             ];
 
             $formattedResults[] = [
                 'pat_if' => $pat_if,
                 'doc_if' => $doc_if,
-                'app_if' => $app_if
+                'app_if' => $app_if,
+                'exam_if' => $exam_if,
+                'pres_if' => $pres_if
             ];
         }
 

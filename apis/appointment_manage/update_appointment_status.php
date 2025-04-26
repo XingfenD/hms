@@ -73,8 +73,8 @@ function handleRequest() {
         }
 
         // 验证新状态是否合法
-        if (!in_array($newStatus, [1, 2])) {
-            throw new \Exception("Invalid new_status value. Allowed values are 1 or 2.", 400);
+        if (!in_array($newStatus, [1, 2, 3, 4])) {
+            throw new \Exception("Invalid new_status value. Allowed values are 1, 2, 3 or 4.", 400);
         }
 
         // 验证指定的 AppointmentID 是否存在

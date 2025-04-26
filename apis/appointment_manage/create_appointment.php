@@ -72,7 +72,7 @@ function handleRequest() {
         $appointmentId = $db->lastInsertId();
 
         /* return success response */
-        echo ApiResponse::success(["message" => "挂号成功", "appointment_id" => $appointmentId])->toJson();
+        echo ApiResponse::success(["message" => "create appointment success", "appointment_id" => $appointmentId])->toJson();
     } catch (\Exception $e) {
         /* return fail response */
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
