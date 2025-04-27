@@ -1,7 +1,7 @@
 <?php
 /**
- * @file apis/search_appointments.php
- * @brief 根据 ap_id 查询挂号记录及检查项目信息的 API
+ * @file apis/search_exam_result.php
+ * @brief 根据 exam_id 查询检查项目信息的 API
  * @author xvjie
  * @date 2025-04-18
  */
@@ -25,43 +25,20 @@ use App\Response\ApiResponse;
 use App\Database\Database;
 
 /**
- * 根据 ap_id 查询挂号记录及检查项目信息
+ * 根据 exam_id 查询检查项目信息
  * @param \PDO $db 数据库连接对象
- * @param int $apId 挂号记录 ID
+ * @param int $examId 检查记录 ID
  * @return array 查询结果数组
  * @throws \Exception 如果数据库查询失败
  */
-function searchAppointments($db, $apId) {
+function searchExamInfo($db, $examId) {
     $sql = "
-        SELECT
-            a.pat_id AS PatientId,
-            ui_pat.user_name AS PatientName,
-            a.doc_id AS DoctorID,
-            ui_doc.user_name AS DoctorName,
-            e_def.exam_name AS ExaminationItem,
-            -- 这里假设你想取每个 exam_id 对应的最新检查结果，如果有其他需求可以调整
-            MAX(e_res.exam_result) AS ExaminationResult
-        FROM
-            appointment a
-        JOIN
-            user_info ui_pat ON a.pat_id = ui_pat.user_id
-        JOIN
-            doctor d ON a.doc_id = d.doc_id
-        JOIN
-            user_info ui_doc ON d.doc_uid = ui_doc.user_id
-        LEFT JOIN
-            exam_record e ON a.ap_id = e.ap_id
-        LEFT JOIN
-            examination_def e_def ON e.exam_def_id = e_def.exam_def_id
-        LEFT JOIN
-            exam_result e_res ON e.exam_rcd_id = e_res.exam_id
-        WHERE
-            a.ap_id = :apId
-        GROUP BY
-            a.pat_id, ui_pat.user_name, a.doc_id, ui_doc.user_name, e_def.exam_name, e.exam_id
+        SELECT *
+        FROM exam_info
+        WHERE exam_id = :examId
     ";
 
-    $params = [':apId' => $apId];
+    $params = [':examId' => $examId];
 
     try {
         $stmt = $db->prepare($sql);
@@ -85,19 +62,23 @@ function handleRequest() {
         $database = new Database();
         $db = $database->connect();
 
-        // 获取 GET 请求中的 ap_id
-        $apId = $_GET['ap_id'] ?? null;
+        // 获取 GET 请求中的 exam_id
+        $examId = $_GET['exam_id'] ?? null;
 
-        // 验证 ap_id 是否存在
-        if ($apId === null) {
-            throw new \Exception("ap_id 参数是必需的", 400);
+        // 验证 exam_id 是否存在
+        if ($examId === null) {
+            throw new \Exception("exam_id 参数是必需的", 400);
         }
 
         // 执行搜索
-        $appointments = searchAppointments($db, $apId);
+        $examInfos = searchExamInfo($db, $examId);
+
+        if (empty($examInfos)) {
+            throw new \Exception("未找到对应的检查记录", 404);
+        }
 
         // 返回成功响应
-        echo ApiResponse::success($appointments)->toJson();
+        echo ApiResponse::success($examInfos)->toJson();
     } catch (\Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
