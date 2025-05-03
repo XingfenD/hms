@@ -1,7 +1,7 @@
 <?php
 /**
  * @file apis/get_doctor_schedules.php
- * @brief 获取指定时间范围内医生排班信息的 API
+ * @brief 获取某个医生的排班信息的 API
  * @author xvjie
  * @date 2025-04-18
  */
@@ -32,7 +32,7 @@ use App\Database\Database;
  * @return array 查询结果数组
  * @throws Exception 如果数据库查询失败
  */
-function getDoctorSchedulesByDateRange($db, $startDate, $endDate) {
+function getDoctorSchedulesByDateRange($db, $doctorID) {
     $sql = "SELECT
                 s.schedule_id,
                 s.doc_id AS doctor_id,
@@ -48,11 +48,10 @@ function getDoctorSchedulesByDateRange($db, $startDate, $endDate) {
             JOIN
                 departments dept ON d.DepartmentID = dept.DepartmentId
             WHERE
-                s.date BETWEEN :startDate AND :endDate";
+                s.doc_id = :doctorID";
 
     $params = [
-        ':startDate' => $startDate,
-        ':endDate' => $endDate
+        ':doctorID' => $doctorID
     ];
 
     try {
@@ -75,17 +74,16 @@ function handleRequest() {
         // 初始化数据库连接
         $db = initializeDatabase();
 
-        // 获取 GET 请求中的开始日期和结束日期
-        $startDate = $_GET['start_date'] ?? '';
-        $endDate = $_GET['end_date'] ?? '';
+        // 获取 GET 请求中的医生ID
+        $doctorID = $_GET['doctor_id'] ?? '';
 
         // 验证日期参数
-        if (empty($startDate) || empty($endDate)) {
-            throw new Exception("Missing startDate or endDate parameter", 400);
+        if (empty($doctorID)) {
+            throw new Exception("Missing doctorID parameter", 400);
         }
 
         // 执行查询
-        $schedules = getDoctorSchedulesByDateRange($db, $startDate, $endDate);
+        $schedules = getDoctorSchedulesByDateRange($db, $doctorID);
 
         // 返回成功响应
         echo ApiResponse::success($schedules)->toJson();
