@@ -3,8 +3,8 @@
 date_default_timezone_set('Asia/Shanghai');
 
 /**
- * @file apis/restore_database.php
- * @brief 恢复数据库的 API
+ * @file apis/backup_database.php
+ * @brief 备份数据库的 API
  * @author xvjie
  * @date 2025-04-16
  */
@@ -17,7 +17,7 @@ if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: GET");        /* NOTE: change the allow method for each single api */
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../utils/ApiResponse.php';
@@ -46,25 +46,16 @@ function formatBytes($bytes, $precision = 2) {
 }
 
 /**
- * 从备份文件恢复数据库
+ * 备份数据库到指定目录
  * @param PDO $db 数据库连接对象
- * @param string $backupFileName 备份文件名
  * @param string $backupDir 备份目录
- * @return array 包含恢复信息的数组
- * @throws Exception 如果恢复过程中出现错误
+ * @return array 包含备份文件信息的数组
+ * @throws Exception 如果备份过程中出现错误
  */
-function restoreDatabase($db, $backupFileName, $backupDir) {
+function backupDatabase($db, $backupDir) {
     // 确保备份目录存在
     if (!is_dir($backupDir)) {
-        throw new Exception("Backup directory not found", 404);
-    }
-
-    // 完整的备份文件路径
-    $backupFile = $backupDir . '/' . $backupFileName;
-
-    // 检查备份文件是否存在
-    if (!file_exists($backupFile)) {
-        throw new Exception("Backup file not found: $backupFileName", 404);
+        mkdir($backupDir, 0777, true);
     }
 
     // 创建 Database 实例并获取连接参数
@@ -74,28 +65,31 @@ function restoreDatabase($db, $backupFileName, $backupDir) {
     $dbname = $params['db_name'];
     $username = $params['username'];
     $password = $params['password'];
+    
+    // 生成备份文件名
+    $backupFile = $backupDir . '/backup_' . date('YmdHis') . '.sql';
 
-    // 构建恢复命令
-    $command = "mysql --user={$username} --password={$password} --host={$servername} {$dbname} < {$backupFile}";
+    // 构建 mysqldump 命令
+    $command = "mysqldump --user={$username} --password={$password} --host={$servername} {$dbname} > {$backupFile}";
 
     // 执行命令
     exec($command, $output, $returnCode);
 
     if ($returnCode !== 0) {
-        throw new Exception("Database restore failed: " . implode("\n", $output), 500);
+        throw new Exception("Database backup failed: " . implode("\n", $output), 500);
     }
 
     // 获取文件大小
     $fileSize = filesize($backupFile);
     $formattedFileSize = formatBytes($fileSize);
 
-    // 获取恢复时间
-    $restoreTime = date('Y-m-d H:i:s');
+    // 获取备份时间
+    $backupTime = date('Y-m-d H:i:s');
 
     return [
-        'backupFileName' => $backupFileName,
+        'backupFileName' => basename($backupFile),
         'fileSize' => $formattedFileSize,
-        'restoreTime' => $restoreTime
+        'backupTime' => $backupTime
     ];
 }
 
@@ -105,7 +99,7 @@ function restoreDatabase($db, $backupFileName, $backupDir) {
 function handleRequest() {
     try {
         // 验证请求方法
-        verifyMethods(['POST']);
+        verifyMethods(['GET']);
 
         // 建立数据库连接
         $database = new Database();
@@ -114,17 +108,11 @@ function handleRequest() {
         // 备份目录
         $backupDir = realpath(__DIR__ . '/../../backup');
 
-        // 获取备份文件名
-        $backupFileName = $_POST['backupFileName'] ?? null;
-        if (!$backupFileName) {
-            throw new Exception("Backup file name is required", 400);
-        }
-
-        // 执行恢复操作
-        $restoreInfo = restoreDatabase($db, $backupFileName, $backupDir);
+        // 执行备份操作
+        $backupInfo = backupDatabase($db, $backupDir);
 
         // 返回成功响应
-        echo ApiResponse::success($restoreInfo)->toJson();
+        echo ApiResponse::success($backupInfo)->toJson();
     } catch (Exception $e) {
         // 返回失败响应
         echo ApiResponse::error($e->getCode(), $e->getMessage())->toJson();
@@ -132,4 +120,4 @@ function handleRequest() {
 }
 
 // 调用处理请求的函数
-handleRequest();    
+handleRequest();

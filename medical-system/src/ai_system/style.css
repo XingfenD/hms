@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  --primary-color: #10a37f;
+  --primary-hover: #0d8a6c;
+  --text-color: #333;
+  --light-gray: #f5f5f5;
+  --border-color: #e6e6e6;
+  --accent-color: #4a95eb;
+  --accent-hover: #3780d7;
+  --background-pattern: radial-gradient(#e3e3e3 1px, transparent 1px);
+  --background-size: 20px 20px;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --gradient-primary: linear-gradient(135deg, var(--primary-color), #1a866a);
+  --gradient-accent: linear-gradient(135deg, var(--accent-color), #3780d7);
+  --transition-normal: all 0.3s ease;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Noto Sans SC', 'Arial', sans-serif;
+  color: var(--text-color);
+  background-color: var(--light-gray);
+  overflow-x: hidden;
+}
+
+/* 添加页面背景图案 */
+body {
+  background-image: 
+    radial-gradient(rgba(16, 163, 127, 0.15) 1px, transparent 1px),
+    radial-gradient(rgba(16, 163, 127, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px, 100px 100px;
+  background-position: 0 0, 25px 25px;
+  animation: backgroundMove 120s linear infinite;
+}
+
+@keyframes backgroundMove {
+  0% { background-position: 0 0, 25px 25px; }
+  100% { background-position: 1000px 1000px, 1025px 1025px; }
+}
+
+#app {
+  height: 100vh;
+  padding: 20px;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  #app {
+    padding: 0;
+    height: 100%;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 按钮和交互元素的基本样式 */
+button, 
+input[type="button"], 
+input[type="submit"] {
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+button:focus, 
+input:focus, 
+textarea:focus {
+  outline: none;
+}
+
+/* 添加文本选择样式 */
+::selection {
+  background-color: rgba(16, 163, 127, 0.2);
+  color: var(--text-color);
+}
+
+/* 添加焦点指示器 */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* 为图像、代码块和其他内容添加淡入效果 - 但排除可能导致闪烁的元素 */
+img, video, blockquote {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* 代码块应该立即显示，不使用淡入效果 */
+pre, code {
+  opacity: 1;
+  animation: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 为通知和弹窗添加动画 */
+.notification, .dialog, .modal {
+  animation: slideIn 0.3s ease, fadeIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); }
+  to { transform: translateY(0); }
+}
+
+/* 为链接添加样式 */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  position: relative;
+  transition: var(--transition-normal);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+a:hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background-color: var(--primary-hover);
+  transform: scaleX(1);
+  transform-origin: bottom left;
+  transition: transform 0.3s ease-out;
+}
+
+/* 为卡片和容器添加悬停效果 */
+.card, .container, .box {
+  transition: var(--transition-normal);
+}
+
+.card:hover, .container:hover, .box:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 添加加载动画 */
+.loading {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.loading div {
+  position: absolute;
+  border: 4px solid var(--primary-color);
+  opacity: 1;
+  border-radius: 50%;
+  animation: loading 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.loading div:nth-child(2) {
+  animation-delay: -0.5s;
+}
+
+@keyframes loading {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 0px;
+    left: 0px;
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
